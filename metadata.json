@@ -1,0 +1,6 @@
+{
+  "name": "CloudForge",
+  "description": "A modern cloud deployment platform where developers can connect repositories, monitor builds, and scale deployments from one dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
