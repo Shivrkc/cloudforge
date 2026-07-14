@@ -1,35 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, Github, Terminal, ArrowRight, Activity } from 'lucide-react';
-import { ActiveView } from '../../types';
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routes";
 
 interface NavbarProps {
-  currentView: ActiveView;
-  setView: (view: ActiveView) => void;
-  scrollToSection: (id: string) => void;
+  scrollToSection?: (id: string) => void;
 }
 
-export default function Navbar({ currentView, setView, scrollToSection }: NavbarProps) {
+export default function Navbar({
+  scrollToSection,
+}: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isLanding = location.pathname === ROUTES.HOME;
+  const isDashboard = location.pathname === ROUTES.DASHBOARD;
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleNavClick = (sectionId: string) => {
     setIsMobileMenuOpen(false);
-    if (currentView !== 'landing') {
-      setView('landing');
-      // Delay scrolling slightly to allow rendering
+  
+    if (!isLanding) {
+      navigate(ROUTES.HOME);
+  
       setTimeout(() => {
-        scrollToSection(sectionId);
+        scrollToSection?.(sectionId);
       }, 100);
     } else {
-      scrollToSection(sectionId);
+      scrollToSection?.(sectionId);
     }
   };
 
@@ -37,141 +46,62 @@ export default function Navbar({ currentView, setView, scrollToSection }: Navbar
     <nav
       id="main-navbar"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled || currentView !== 'landing'
-          ? 'glass-header py-4 shadow-lg'
-          : 'bg-transparent py-6'
+        isScrolled || location.pathname !== ROUTES.HOME ? 'bg-brand-dark/80 backdrop-blur-md border-b border-zinc-900' : 'bg-transparent'
       }`}
     >
+      {/* Complete Desktop Navigation Layout Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div
-            id="navbar-logo-container"
-            onClick={() => setView('landing')}
-            className="flex items-center space-x-2.5 cursor-pointer group"
-          >
-            <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-all duration-300">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center gap-8">
+            <div 
+              onClick={() => navigate(ROUTES.HOME)} 
+              className="flex items-center gap-2 cursor-pointer text-white font-sans font-bold text-lg tracking-tight"
+            >
+              <Terminal className="w-5 h-5 text-blue-500" />
+              <span>CloudForge</span>
             </div>
-            <div className="flex flex-col">
-              <span className="font-sans font-bold text-xl tracking-tight text-white flex items-center gap-1.5 leading-none">
-                CloudForge
-                <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-blue-400 bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-900/40">
-                  v2.0
-                </span>
-              </span>
-              <span className="text-[10px] font-mono tracking-wider text-gray-500 group-hover:text-gray-400 transition-colors leading-none mt-1">
-                From Code to Cloud
-              </span>
-            </div>
+            
+            {isLanding && (
+              <div className="hidden md:flex items-center gap-6 text-sm text-gray-400">
+                <a href="#features" onClick={(e) => { e.preventDefault(); handleNavClick('features'); }} className="hover:text-white transition-colors">Features</a>
+                <a href="#pricing" onClick={(e) => { e.preventDefault(); handleNavClick('pricing'); }} className="hover:text-white transition-colors">Pricing</a>
+                <a href="#faq" onClick={(e) => { e.preventDefault(); handleNavClick('faq'); }} className="hover:text-white transition-colors">FAQ</a>
+              </div>
+            )}
           </div>
 
-          {/* Desktop Navigation */}
-          {currentView === 'landing' ? (
-            <div id="desktop-nav-links" className="hidden md:flex items-center space-x-8">
-              <button
-                id="nav-link-features"
-                onClick={() => handleNavClick('features')}
-                className="text-sm font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
-              >
-                Features
-              </button>
-              <button
-                id="nav-link-pricing"
-                onClick={() => handleNavClick('pricing')}
-                className="text-sm font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
-              >
-                Pricing
-              </button>
-              <button
-                id="nav-link-faq"
-                onClick={() => handleNavClick('faq')}
-                className="text-sm font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
-              >
-                FAQ
-              </button>
-              <a
-                id="nav-link-docs"
-                href="#docs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Documentation is being generated as part of our interactive walkthrough! Check back soon.');
-                }}
-                className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
-              >
-                Docs
-              </a>
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center space-x-3">
-              <button
-                id="nav-link-back-home"
-                onClick={() => setView('landing')}
-                className="text-xs font-mono text-gray-400 hover:text-white transition-colors bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg"
-              >
-                ← Back to Landing
-              </button>
-            </div>
-          )}
-
-          {/* User Auth CTAs */}
-          <div className="hidden md:flex items-center space-x-4">
-            <a
-              id="nav-github-icon"
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-              aria-label="GitHub Repository"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-
-            {currentView !== 'dashboard' ? (
+          <div className="hidden md:flex items-center gap-4">
+            {!isDashboard ? (
               <>
-                <button
-                  id="nav-btn-login"
-                  onClick={() => setView('login')}
-                  className="text-sm font-medium text-gray-400 hover:text-white px-4 py-2 cursor-pointer transition-colors"
+                <button 
+                  onClick={() => navigate(ROUTES.LOGIN)}
+                  className="text-sm font-medium text-gray-400 hover:text-white transition-colors px-3 py-1.5"
                 >
-                  Login
+                  Log In
                 </button>
-                <button
-                  id="nav-btn-signup"
-                  onClick={() => setView('signup')}
-                  className="bg-white text-black px-5 py-2 rounded-full text-sm font-bold hover:bg-gray-200 transition-all shadow-xl shadow-white/5 cursor-pointer"
+                <button 
+                  onClick={() => navigate(ROUTES.SIGNUP)}
+                  className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg px-4 py-2 transition-all shadow-sm active:scale-98"
                 >
                   Sign Up
                 </button>
               </>
             ) : (
-              <button
-                id="nav-btn-logout"
-                onClick={() => setView('landing')}
-                className="text-sm font-medium text-gray-400 hover:text-white px-4 py-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-900/50 rounded-xl transition-colors cursor-pointer"
+              <button 
+                onClick={() => navigate(ROUTES.HOME)}
+                className="text-sm font-medium text-gray-400 hover:text-white border border-zinc-800 bg-zinc-900/40 rounded-lg px-4 py-2 transition-colors"
               >
                 Log Out
               </button>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center space-x-2">
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-              aria-label="GitHub"
-            >
-              <Github className="w-5 h-5" />
-            </a>
+          {/* Mobile hamburger menu indicator */}
+          <div className="flex md:hidden">
             <button
-              id="mobile-menu-toggle"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-gray-400 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors"
+              className="text-gray-400 hover:text-white p-2"
+              aria-label="Toggle Menu"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -179,49 +109,42 @@ export default function Navbar({ currentView, setView, scrollToSection }: Navbar
         </div>
       </div>
 
-      {/* Mobile Drawer Overlay */}
+      {/* Responsive Dropdown Mobile Menu Panel */}
       {isMobileMenuOpen && (
-        <div id="mobile-nav-drawer" className="md:hidden absolute top-full left-0 right-0 glass shadow-2xl border-t border-zinc-900 py-6 px-4 space-y-4">
-          {currentView === 'landing' && (
-            <div className="flex flex-col space-y-3 pb-4 border-b border-zinc-800">
-              <button
-                onClick={() => handleNavClick('features')}
-                className="text-left py-2 text-base font-medium text-gray-400 hover:text-white transition-colors"
+        <div className="md:hidden bg-brand-dark/95 backdrop-blur-lg border-b border-zinc-900 px-4 pt-4 pb-6 space-y-4 shadow-xl animate-fade-in">
+          {isLanding && (
+            <div className="flex flex-col space-y-3 border-b border-zinc-900 pb-4">
+              <a 
+                href="#features" 
+                onClick={(e) => { e.preventDefault(); handleNavClick('features'); }}
+                className="text-base font-medium text-gray-300 hover:text-white py-1 block"
               >
                 Features
-              </button>
-              <button
-                onClick={() => handleNavClick('pricing')}
-                className="text-left py-2 text-base font-medium text-gray-400 hover:text-white transition-colors"
+              </a>
+              <a 
+                href="#pricing" 
+                onClick={(e) => { e.preventDefault(); handleNavClick('pricing'); }}
+                className="text-base font-medium text-gray-300 hover:text-white py-1 block"
               >
                 Pricing
-              </button>
-              <button
-                onClick={() => handleNavClick('faq')}
-                className="text-left py-2 text-base font-medium text-gray-400 hover:text-white transition-colors"
+              </a>
+              <a 
+                href="#faq" 
+                onClick={(e) => { e.preventDefault(); handleNavClick('faq'); }}
+                className="text-base font-medium text-gray-300 hover:text-white py-1 block"
               >
                 FAQ
-              </button>
-              <a
-                href="#docs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Documentation available in next phase!');
-                }}
-                className="py-2 text-base font-medium text-gray-400 hover:text-white transition-colors"
-              >
-                Docs
               </a>
             </div>
           )}
 
           <div className="flex flex-col space-y-3">
-            {currentView !== 'dashboard' ? (
+            {location.pathname !== ROUTES.DASHBOARD ? (
               <>
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    setView('login');
+                    navigate(ROUTES.LOGIN);
                   }}
                   className="w-full text-center py-2.5 text-base font-medium text-gray-400 hover:text-white border border-zinc-800 bg-zinc-900/40 rounded-xl transition-colors"
                 >
@@ -230,7 +153,7 @@ export default function Navbar({ currentView, setView, scrollToSection }: Navbar
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    setView('signup');
+                    navigate(ROUTES.SIGNUP);
                   }}
                   className="w-full text-center py-2.5 text-base font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-colors"
                 >
@@ -241,7 +164,7 @@ export default function Navbar({ currentView, setView, scrollToSection }: Navbar
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  setView('landing');
+                  navigate(ROUTES.HOME);
                 }}
                 className="w-full text-center py-2.5 text-base font-medium text-gray-400 hover:text-white border border-zinc-800 bg-zinc-900/40 rounded-xl transition-colors"
               >
