@@ -7,6 +7,9 @@ import {
 import { Project, Deployment, Repository, BuildLog } from '../types';
 import { MOCK_PROJECTS, MOCK_DEPLOYMENTS, MOCK_REPOSITORIES, SIMULATED_BUILD_STEPS } from '../data/mockData';
 
+
+
+
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
   const [deployments, setDeployments] = useState<Deployment[]>(MOCK_DEPLOYMENTS);
@@ -180,14 +183,15 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsConnectModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-sans font-medium text-sm py-2.5 px-4.5 rounded-xl transition-all shadow-md shadow-blue-950 flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" /> Connect Repository
-              </button>
-            </div>
+  <button
+    type="button"
+    onClick={() => setIsConnectModalOpen(true)}
+    className="bg-blue-600 hover:bg-blue-500 text-white font-sans font-medium text-sm py-2.5 px-4.5 rounded-xl transition-all shadow-md shadow-blue-950 flex items-center gap-2 cursor-pointer"
+  >
+    <Plus className="w-4 h-4" />
+    Connect Repository
+  </button>
+</div>
 
           </div>
 

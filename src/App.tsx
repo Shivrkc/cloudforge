@@ -13,6 +13,7 @@ import Faq from "./components/landing/Faq";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 export default function App() {
   const location = useLocation();
@@ -76,7 +77,11 @@ export default function App() {
 
         <Route
           path={ROUTES.DASHBOARD}
-          element={<Dashboard />}
+          element={
+           <ProtectedRoute>
+            <Dashboard />
+            </ProtectedRoute>
+           }
         />
       </Routes>
     </div>

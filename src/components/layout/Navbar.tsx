@@ -219,7 +219,7 @@ export default function Navbar({
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  navigate(ROUTES.HOME);
+                  navigate(ROUTES.LOGIN);
                 }}
                 className="w-full text-center py-2.5 text-base font-medium text-gray-400 hover:text-white border border-zinc-800 bg-zinc-900/40 rounded-xl transition-colors"
               >
