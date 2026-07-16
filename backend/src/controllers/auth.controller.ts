@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as authService from "../services/auth.service";
+import { AuthRequest } from "../middleware/auth.middleware";
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -21,6 +22,23 @@ export const loginUser = async (req: Request, res: Response) => {
     return res.status(200).json(result);
   } catch (error: any) {
     return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+export const getCurrentUser = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const result = await authService.getCurrentUser(req.user!.id);
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(404).json({
       success: false,
       message: error.message,
     });
