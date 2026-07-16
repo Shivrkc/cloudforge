@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { Mail, Lock, Eye, EyeOff, Github, Chrome, Terminal, ArrowRight, User, ShieldCheck, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
+import { register } from "../services/auth.service";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -14,42 +15,54 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    // Comprehensive validation checks
+    setError("");
+  
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      setError('Please fill in all requested fields.');
+      setError("Please fill in all requested fields.");
       return;
     }
-
-    if (!email.includes('@')) {
-      setError('Please provide a valid company or developer email.');
+  
+    if (!email.includes("@")) {
+      setError("Please provide a valid company or developer email.");
       return;
     }
-
+  
     if (password.length < 8) {
-      setError('Security policy requires passwords of at least 8 characters.');
+      setError("Security policy requires passwords of at least 8 characters.");
       return;
     }
-
+  
     if (password !== confirmPassword) {
-      setError('Password fields do not match. Please re-type.');
+      setError("Password fields do not match. Please re-type.");
       return;
     }
-
+  
     if (!agreeTerms) {
-      setError('You must consent to the terms.');
+      setError("You must consent to the terms.");
       return;
     }
-
-    setIsLoading(true);
-    setTimeout(() => {
+  
+    try {
+      setIsLoading(true);
+  
+      await register({
+        name,
+        email,
+        password,
+      });
+  
+      navigate(ROUTES.LOGIN);
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+        "Registration failed. Please try again."
+      );
+    } finally {
       setIsLoading(false);
-      navigate(ROUTES.DASHBOARD);
-    }, 1500);
-  };
+    }
+  };;
 
   return (
     <main id="signup-container" className="min-h-screen bg-brand-dark flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">

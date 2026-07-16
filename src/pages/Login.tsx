@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { Mail, Lock, Eye, EyeOff, Github, Chrome, Terminal, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
+import { login } from "../services/auth.service";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,29 +13,38 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    // Form simple validation
+    setError("");
+  
     if (!email.trim() || !password.trim()) {
-      setError('Please fill in all security fields.');
+      setError("Please fill in all security fields.");
       return;
     }
-
-    if (!email.includes('@')) {
-      setError('Please insert a valid email address.');
+  
+    if (!email.includes("@")) {
+      setError("Please insert a valid email address.");
       return;
     }
-
-    setIsLoading(true);
-
-    // Simulate real authenticating request
-    setTimeout(() => {
-      setIsLoading(false);
+  
+    try {
+      setIsLoading(true);
+  
+      await login({
+        email,
+        password,
+      });
+  
       navigate(ROUTES.DASHBOARD);
-    }, 1500);
-  };
+    } catch (error: any) {
+      setError(
+        error?.response?.data?.message ||
+        "Invalid email or password."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };;
 
   const handleOAuthLogin = (provider: 'google' | 'github') => {
     setIsLoading(true);
