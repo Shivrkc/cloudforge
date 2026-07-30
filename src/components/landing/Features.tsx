@@ -1,196 +1,159 @@
-import { useState } from 'react';
 import { motion } from 'motion/react';
-import { GitBranch, Zap, Terminal, Shield, Database, Cpu, ArrowRight, Layers, CheckCircle2, CloudLightning } from 'lucide-react';
-import { FEATURES, TRUSTED_COMPANIES } from '../../data/mockData';
+import { 
+  GitBranch, 
+  Rocket, 
+  Container, 
+  Bot, 
+  Terminal, 
+  KeyRound,
+  ArrowUpRight
+} from 'lucide-react';
 
-// Map icons manually to bypass dynamic import issues
-const getIcon = (iconName: string) => {
-  switch (iconName) {
-    case 'GitBranch': return <GitBranch className="w-6 h-6 text-blue-400" />;
-    case 'Zap': return <Zap className="w-6 h-6 text-cyan-400" />;
-    case 'Terminal': return <Terminal className="w-6 h-6 text-purple-400" />;
-    case 'Shield': return <Shield className="w-6 h-6 text-indigo-400" />;
-    case 'Database': return <Database className="w-6 h-6 text-teal-400" />;
-    case 'Cpu': return <Cpu className="w-6 h-6 text-emerald-400" />;
-    default: return <Layers className="w-6 h-6 text-gray-400" />;
+const TECH_STACK = [
+  { name: 'React', label: 'React' },
+  { name: 'Node.js', label: 'Node.js' },
+  { name: 'Docker', label: 'Docker' },
+  { name: 'PostgreSQL', label: 'PostgreSQL' },
+  { name: 'Prisma', label: 'Prisma' },
+  { name: 'GitHub', label: 'GitHub' },
+  { name: 'AWS', label: 'AWS (Soon)' }
+];
+
+const FEATURES = [
+  {
+    icon: GitBranch,
+    title: 'GitHub Integration',
+    description: 'Organize, sync, and deploy your repositories automatically on every commit and pull request.',
+    tag: 'CI/CD Pipelines'
+  },
+  {
+    icon: Rocket,
+    title: 'One-click Deployments',
+    description: 'Build, deploy, and monitor applications with zero configuration or complex pipeline setup.',
+    tag: 'Zero Friction'
+  },
+  {
+    icon: Container,
+    title: 'Docker Builder',
+    description: 'Isolated micro-VM container builds with automatic package caching and fast cold starts.',
+    tag: 'Containerized'
+  },
+  {
+    icon: Bot,
+    title: 'AI Deployment Assistant',
+    description: 'Your smart companion for analyzing stdout logs, diagnosing errors, and suggesting fixes.',
+    tag: 'HAVN AI'
+  },
+  {
+    icon: Terminal,
+    title: 'Deployment Logs',
+    description: 'Stream live build and server logs with full context, search, filtering, and execution history.',
+    tag: 'Real-time'
+  },
+  {
+    icon: KeyRound,
+    title: 'Environment Variables',
+    description: 'Encrypted secret storage with pre-flight schema validation to prevent missing env variables.',
+    tag: 'Security'
   }
-};
+];
 
 export default function Features() {
-  const [activeStep, setActiveStep] = useState(0);
-
-  const workflowSteps = [
-    {
-      title: '1. Connect & Push',
-      subtitle: 'Write your code as usual in your local editor. When ready, execute git push to your GitHub branch.',
-      details: ['Access to selective repositories only', 'Automatic branch targeting (main, staging)', 'Instant webhook recognition']
-    },
-    {
-      title: '2. Intelligent Compilation',
-      subtitle: 'CloudForge isolated micro-runners immediately wake up, pull your files, resolve dependencies, and compile.',
-      details: ['Zero-configuration build environments', 'Automatic package lockfile audits', 'Multi-layer framework caching']
-    },
-    {
-      title: '3. Global Edge Distribution',
-      subtitle: 'The compiled static assets are atomic-versioned and deployed across our anycast edge nodes worldwide.',
-      details: ['SSL updates in under 2 seconds', 'DDoS protection routing active', 'Serverless APIs activated instantly']
-    }
-  ];
-
   return (
-    <section id="features" className="py-24 bg-brand-dark relative overflow-hidden">
-      {/* Decorative Blur Backdrops */}
-      <div className="absolute top-1/4 right-0 w-[450px] h-[450px] bg-blue-900/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
-      <div className="absolute bottom-1/4 left-0 w-[450px] h-[450px] bg-purple-900/10 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+    <section id="features" className="py-24 bg-[#050507] text-white relative overflow-hidden border-t border-zinc-900/60">
+      {/* Background Glow Overlay */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-orange-600/5 blur-[160px] pointer-events-none rounded-full" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-28">
-
-        {/* 1. Trusted By Section */}
-        <div className="text-center space-y-6">
-          <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">
-            TRUSTED BY PRODUCT TEAMS AT LEADING STARTUPS
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-24">
+        
+        {/* Trusted By / Tech Stack Banner */}
+        <motion.div 
+          className="space-y-6 text-center"
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <p className="text-[11px] font-mono font-medium text-zinc-500 uppercase tracking-widest">
+            Trusted & Supported Ecosystems
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16 opacity-60 hover:opacity-85 transition-opacity">
-            {TRUSTED_COMPANIES.map((company) => (
-              <div key={company.name} className="flex items-center space-x-2.5 filter grayscale hover:grayscale-0 transition-all duration-300">
-                <img src={company.logo} alt={company.name} className="w-6 h-6" referrerPolicy="no-referrer" />
-                <span className="font-sans font-bold text-sm text-gray-300 tracking-tight">{company.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 2. Core Bento Grid Features */}
-        <div className="space-y-16">
-          <div className="text-center max-w-2xl mx-auto space-y-4">
-            <h2 className="text-xs font-mono text-blue-400 uppercase tracking-widest font-semibold">
-              PLATFORM FEATS
-            </h2>
-            <h3 className="text-3xl sm:text-4xl font-sans font-extrabold text-white tracking-tight">
-              An Complete Cloud Suite <br />
-              For Rapid Shipping
-            </h3>
-            <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-              Every infrastructure tool you need to launch static websites, micro-frontends, serverless APIs, or heavy databases, pre-configured securely out of the box.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURES.map((feat) => (
-              <div
-                key={feat.title}
-                className="bg-brand-card/70 border border-brand-border hover:border-zinc-800 rounded-2xl p-6.5 hover:shadow-xl hover:shadow-blue-950/20 transition-all duration-300 relative group overflow-hidden"
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-70 hover:opacity-100 transition-opacity">
+            {TECH_STACK.map((tech) => (
+              <div 
+                key={tech.name} 
+                className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors duration-200 text-xs font-medium"
               >
-                {/* Accent glow on hover */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div className="w-12 h-12 rounded-xl bg-zinc-950 flex items-center justify-center border border-zinc-900 group-hover:scale-105 transition-transform duration-300">
-                      {getIcon(feat.icon)}
-                    </div>
-                    <span className="text-[10px] font-mono tracking-widest font-semibold uppercase px-2 py-0.5 rounded bg-zinc-900 text-gray-400 group-hover:text-white border border-zinc-800 transition-colors">
-                      {feat.badge}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-sans font-bold text-lg text-white group-hover:text-blue-400 transition-colors">
-                      {feat.title}
-                    </h4>
-                    <p className="text-gray-400 text-sm leading-relaxed">
-                      {feat.description}
-                    </p>
-                  </div>
-                </div>
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500/80" />
+                <span>{tech.label}</span>
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* 3. Interactive Deployment Workflow Diagram */}
-        <div className="bg-brand-card/40 border border-brand-border rounded-3xl p-8 sm:p-12 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
-            <CloudLightning className="w-64 h-64 text-blue-500" />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Features Header & Grid */}
+        <div className="space-y-12">
+          {/* Section Header */}
+          <motion.div 
+            className="text-center max-w-2xl mx-auto space-y-3"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-full px-3 py-1 text-[11px] text-orange-400 font-medium">
+              <span>Platform Capabilities</span>
+            </div>
             
-            {/* Steps Left Panel */}
-            <div className="lg:col-span-5 space-y-6">
-              <span className="text-xs font-mono font-bold text-purple-400 uppercase tracking-widest">
-                AUTOMATED PIPELINE
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-sans font-extrabold text-white tracking-tight">
-                Git-to-Edge Deployment Workflow
-              </h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                CloudForge intercepts code changes through deep GitHub integrations, handles production compiling in secure micro-environments, and serves the results on our low-latency cloud.
-              </p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Everything You Need to Deploy Better
+            </h2>
+            
+            <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
+              Designed for modern development workflows. High-performance infrastructure without the ops complexity.
+            </p>
+          </motion.div>
 
-              {/* Selector Buttons */}
-              <div className="space-y-2 pt-2">
-                {workflowSteps.map((step, idx) => (
-                  <button
-                    key={step.title}
-                    type="button"
-                    onClick={() => setActiveStep(idx)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
-                      activeStep === idx
-                        ? 'bg-zinc-950 border-blue-600/60 text-white shadow-md'
-                        : 'bg-transparent border-zinc-900 text-gray-400 hover:border-zinc-800 hover:text-white'
-                    }`}
-                  >
-                    <span className="text-sm font-sans font-semibold">{step.title}</span>
-                    <ArrowRight className={`w-4 h-4 transition-transform ${activeStep === idx ? 'translate-x-1 text-blue-400' : 'text-gray-600'}`} />
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* 6 Feature Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.08 }}
+                  className="group relative bg-[#0b0b0e]/90 hover:bg-[#0e0e12] border border-zinc-800/80 hover:border-orange-500/40 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-sm"
+                >
+                  {/* Subtle Accent Glow on Hover */}
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-orange-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-            {/* Visual Screen Right Panel */}
-            <div className="lg:col-span-7">
-              <div className="bg-zinc-950 border border-zinc-900 rounded-2xl p-6 sm:p-8 space-y-6">
-                <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
-                  <span className="text-xs font-mono font-semibold text-gray-400">
-                    {workflowSteps[activeStep].title}
-                  </span>
-                  <span className="text-[10px] bg-blue-950/50 text-blue-300 px-2 py-0.5 rounded border border-blue-900/30 font-mono">
-                    active stage
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-300 leading-relaxed font-sans">
-                    {workflowSteps[activeStep].subtitle}
-                  </p>
-
-                  <div className="space-y-2.5 pt-2">
-                    {workflowSteps[activeStep].details.map((detail, dIdx) => (
-                      <div key={dIdx} className="flex items-center gap-2.5 text-xs text-gray-400 font-mono bg-zinc-900/40 p-2.5 rounded-lg border border-zinc-900">
-                        <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
-                        <span>{detail}</span>
+                  <div className="space-y-4">
+                    {/* Top Row: Icon & Tag */}
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 group-hover:scale-105 transition-transform duration-300">
+                        <Icon className="w-5 h-5" />
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <span className="text-[10px] font-mono font-medium text-zinc-500 bg-zinc-900/80 border border-zinc-800 px-2 py-0.5 rounded-md group-hover:text-zinc-300 group-hover:border-zinc-700 transition-colors">
+                        {feature.tag}
+                      </span>
+                    </div>
 
-                {/* Animated visual timeline representation */}
-                <div className="flex items-center justify-between pt-4 border-t border-zinc-900/60">
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 rounded-full ${activeStep >= 0 ? 'bg-blue-500' : 'bg-zinc-800'}`}></div>
-                    <div className={`h-1 w-10 sm:w-16 rounded-full ${activeStep >= 1 ? 'bg-blue-500' : 'bg-zinc-800'}`}></div>
-                    <div className={`w-2 h-2 rounded-full ${activeStep >= 1 ? 'bg-blue-500' : 'bg-zinc-800'}`}></div>
-                    <div className={`h-1 w-10 sm:w-16 rounded-full ${activeStep >= 2 ? 'bg-blue-500' : 'bg-zinc-800'}`}></div>
-                    <div className={`w-2 h-2 rounded-full ${activeStep >= 2 ? 'bg-blue-500' : 'bg-zinc-800'}`}></div>
+                    {/* Body: Title & Concise Description */}
+                    <div className="space-y-2 text-left">
+                      <h3 className="text-base font-semibold text-white group-hover:text-orange-400 transition-colors flex items-center justify-between">
+                        <span>{feature.title}</span>
+                        <ArrowUpRight className="w-4 h-4 text-zinc-600 opacity-0 group-hover:opacity-100 group-hover:text-orange-400 transition-all -translate-x-1 group-hover:translate-x-0" />
+                      </h3>
+                      <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-500 font-mono">
-                    CloudForge v1 Engine
-                  </span>
-                </div>
-              </div>
-            </div>
-
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
