@@ -60,7 +60,6 @@ export default function App() {
           element={
             <div className="flex flex-col flex-grow">
               <Login />
-              <Footer />
             </div>
           }
         />
@@ -70,7 +69,6 @@ export default function App() {
           element={
             <div className="flex flex-col flex-grow">
               <Signup />
-                  <Footer />
             </div>
           }
         />

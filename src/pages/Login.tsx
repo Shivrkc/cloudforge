@@ -1,8 +1,9 @@
 import { useState, FormEvent } from 'react';
-import { Mail, Lock, Eye, EyeOff, Github, Chrome, Terminal, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Github, Chrome, Terminal, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import { login } from "../services/auth.service";
+import { Rocket, Bot, BarChart3 } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -61,9 +62,9 @@ export default function Login() {
         {/* Left Side Content - Form Panel */}
         <div className="space-y-6 w-full">
           <div className="space-y-2">
-            <h2 className="text-2xl font-sans font-extrabold text-white tracking-tight">Access Developer Cluster</h2>
+            <h2 className="text-2xl font-sans font-extrabold text-white tracking-tight">Welcome back</h2>
             <p className="text-xs text-gray-400 font-sans">
-              Enter your authentication criteria to manage high-availability workflows.
+            Sign in to continue deploying your projects.
             </p>
           </div>
 
@@ -75,7 +76,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Developer Email</label>
+              <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
@@ -83,15 +84,15 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-blue-600 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
+                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:borderblue--600 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Cluster Key</label>
-                <a href="#forgot" onClick={(e) => e.preventDefault()} className="text-[11px] font-sans text-blue-400 hover:underline">Recover passkey?</a>
+                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Password</label>
+                <a href="#forgot" onClick={(e) => e.preventDefault()} className="text-[11px] font-sans text-orange-400 hover:underline">Forgot password?</a>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -100,7 +101,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-blue-600 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
+                  className="w-full pl-10 pr-10 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
                 />
                 <button
                   type="button"
@@ -118,25 +119,25 @@ export default function Login() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded bg-zinc-950 border-zinc-800 text-blue-600 accent-blue-600 focus:ring-0"
+                  className="rounded bg-zinc-950 border-zinc-800 text-orange-500 accent-orange-500 focus:ring-0"
                 />
-                Keep environment session authorized
+                Keep me signed in
               </label>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-semibold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 mt-2 cursor-pointer"
+              className="w-full bg-orange-500 hover:bg-orange-500 disabled:bg-orange-800 text-white font-semibold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 mt-2 cursor-pointer"
             >
-              {isLoading ? 'Decrypting credentials...' : 'Authenticate Environment'}
-              {!isLoading && <ArrowRight className="w-4 h-4" />}
+              
+              {isLoading ? 'Signing you in...' : 'Log In'}
             </button>
           </form>
 
           <div className="relative my-6 text-center">
             <span className="absolute inset-x-0 top-1/2 h-px bg-zinc-900 -translate-y-1/2"></span>
-            <span className="relative bg-[#0b0b0c] px-3 text-[10px] font-mono text-gray-500 uppercase tracking-widest">or bridge connection</span>
+            <span className="relative bg-[#0b0b0c] px-3 text-[10px] font-mono text-gray-500 uppercase tracking-widest">or continue with</span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -157,45 +158,77 @@ export default function Login() {
           </div>
 
           <p className="text-center text-xs text-gray-400 font-sans pt-2">
-            New infrastructure architect?{' '}
-            <button onClick={() => navigate(ROUTES.SIGNUP)} className="text-blue-400 hover:underline font-medium">Create provision link</button>
+          Don't have an account?{' '}
+            <button onClick={() => navigate(ROUTES.SIGNUP)} className="text-orange-400 hover:underline font-medium">Sign Up</button>
           </p>
         </div>
 
         {/* Right Side Content - Marketing Data Info Panel */}
-        <div className="hidden md:flex flex-col justify-between h-full bg-zinc-950/60 border border-zinc-900 rounded-2xl p-6 space-y-10">
-          <div className="space-y-4">
-            <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-900/40 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 text-blue-400" />
-            </div>
-            <h3 className="text-sm font-bold text-white font-sans">Isolated Provision Guards</h3>
-            <p className="text-xs text-gray-400 leading-relaxed font-sans">
-              All dashboard configurations utilize automated strict mutually verified client authentication, backed by SOC2 Type II log compliance frameworks configured by default. Join thousands of cloud-native developers on the global grid.
-            </p>
-          </div>
+        <div className="hidden md:flex flex-col justify-center h-full bg-zinc-950/60 border border-zinc-900 rounded-2xl p-8 space-y-8">
 
-          {/* Mini active graph layout decoration */}
-          <div className="bg-brand-card/75 border border-brand-border p-6 rounded-2xl space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
-              <span className="text-xs font-mono text-gray-400 font-medium">LIVE COMPUTE METRIC</span>
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-gray-500">Global Cold Start Latency:</span>
-                <span className="text-white font-bold">11.4ms (p99)</span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-gray-500">Anycast Edge Nodes:</span>
-                <span className="text-blue-400 font-bold">108 Active POPs</span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-gray-500">Monthly SSL renewals:</span>
-                <span className="text-purple-400 font-bold">100% Automated</span>
-              </div>
-            </div>
-          </div>
-        </div>
+  {/* Deploy with confidence */}
+  <div className="flex items-start gap-4">
+    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
+      <Rocket className="w-5 h-5 text-orange-400" />
+    </div>
+
+    <div>
+      <h3 className="text-lg font-bold text-white">
+        Deploy with confidence
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-400 leading-7">
+        Deploy directly from your Git repository with a clean, guided
+        workflow. Build, monitor, and manage your applications from one
+        place.
+      </p>
+    </div>
+  </div>
+
+  <div className="border-t border-zinc-800"></div>
+
+  {/* AI Assistant */}
+  <div className="flex items-start gap-4">
+    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
+      <Bot className="w-5 h-5 text-orange-400" />
+    </div>
+
+    <div>
+      <h3 className="text-lg font-bold text-white">
+        AI that helps, not confuses
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-400 leading-7">
+        HAVN explains deployment errors in plain English, suggests fixes,
+        and helps you move faster whether you're just starting or already
+        experienced.
+      </p>
+    </div>
+  </div>
+
+  <div className="border-t border-zinc-800"></div>
+
+  {/* Build & Grow */}
+  <div className="flex items-start gap-4">
+    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
+      <BarChart3 className="w-5 h-5 text-orange-400" />
+    </div>
+
+    <div>
+      <h3 className="text-lg font-bold text-white">
+        Build and grow
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-400 leading-7">
+        Track deployments, monitor project history, and keep every release
+        organized as your applications evolve.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+
       </div>
     </main>
   );

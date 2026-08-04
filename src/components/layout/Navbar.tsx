@@ -136,7 +136,7 @@ export default function Navbar({
                   onClick={() => navigate(ROUTES.SIGNUP)}
                   className="text-xs font-medium text-white bg-orange-600 hover:bg-orange-500 transition-all duration-200 px-4 py-1.5 rounded-lg shadow-sm shadow-orange-600/20 active:scale-[0.98] cursor-pointer"
                 >
-                  Start Deploying
+                  Sign Up
                 </button>
               </>
             ) : (

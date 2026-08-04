@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Mail, Lock, Eye, EyeOff, Github, Chrome, Terminal, ArrowRight, User, ShieldCheck, Sparkles } from 'lucide-react';
+import {Mail,Lock,Eye,EyeOff,Github,Chrome,User,Rocket,Bot,BarChart3,} from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import { register } from "../services/auth.service";
@@ -25,7 +25,7 @@ export default function Signup() {
     }
   
     if (!email.includes("@")) {
-      setError("Please provide a valid company or developer email.");
+      setError("Please provide a valid company or email.");
       return;
     }
   
@@ -71,9 +71,9 @@ export default function Signup() {
         {/* Left Side Content - Form Panel */}
         <div className="space-y-6 w-full">
           <div className="space-y-2">
-            <h2 className="text-2xl font-sans font-extrabold text-white tracking-tight">Provision Grid Account</h2>
+            <h2 className="text-2xl font-sans font-extrabold text-white tracking-tight">Create your account</h2>
             <p className="text-xs text-gray-400 font-sans">
-              Deploy serverless applications at global edge points instantly.
+            Create an account to start deploying your projects.
             </p>
           </div>
 
@@ -92,29 +92,29 @@ export default function Signup() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Alex Mercer"
-                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-blue-600 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
+                  placeholder="Shiv Gupta"
+                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Developer Email</label>
+              <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block"> Email</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="alex@company.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-blue-600 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
+                  placeholder="Maishivhoon@gmail.com"
+                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Passkey</label>
+                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
@@ -122,13 +122,13 @@ export default function Signup() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-blue-600 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
+                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Confirm Passkey</label>
+                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Confirm Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
@@ -136,7 +136,7 @@ export default function Signup() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-blue-600 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
+                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
                   />
                 </div>
               </div>
@@ -148,25 +148,24 @@ export default function Signup() {
                   type="checkbox"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="rounded mt-0.5 bg-zinc-950 border-zinc-800 text-blue-600 accent-blue-600 focus:ring-0"
+                  className="rounded mt-0.5 bg-zinc-950 border-zinc-800 text-orange-500 accent-orange-500 focus:ring-0"
                 />
-                <span>I accept automated edge provisioning terms and data safety rules</span>
+                <span>I agree to the Terms of Service and Privacy Policy.</span>
               </label>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-semibold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 mt-2 cursor-pointer"
+              className="w-full bg-orange-500 hover:bg-orange-500 disabled:bg-orange-800 text-white font-semibold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 mt-2 cursor-pointer"
             >
-              {isLoading ? 'Allocating grid shards...' : 'Create Provision Account'}
-              {!isLoading && <ArrowRight className="w-4 h-4" />}
+              {isLoading ? 'Creating your account...' : 'Create Account'}
             </button>
           </form>
 
           <div className="relative my-4 text-center">
             <span className="absolute inset-x-0 top-1/2 h-px bg-zinc-900 -translate-y-1/2"></span>
-            <span className="relative bg-[#0b0b0c] px-3 text-[10px] font-mono text-gray-500 uppercase tracking-widest">or integrate via</span>
+            <span className="relative bg-[#0b0b0c] px-3 text-[10px] font-mono text-gray-500 uppercase tracking-widest">or integrate with</span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -185,42 +184,75 @@ export default function Signup() {
           </div>
 
           <p className="text-center text-xs text-gray-400 font-sans">
-            Already registered?{' '}
-            <button onClick={() => navigate(ROUTES.LOGIN)} className="text-blue-400 hover:underline font-medium">Authenticate passkey</button>
+          Already have an account?{' '}
+            <button onClick={() => navigate(ROUTES.LOGIN)} className="text-orange-400 hover:underline font-medium">Log in</button>
           </p>
         </div>
 
         {/* Right Side Content - Marketing Data Info Panel */}
-        <div className="hidden md:flex flex-col justify-between h-full bg-zinc-950/60 border border-zinc-900 rounded-2xl p-6 space-y-10">
-          <div className="space-y-4">
-            <div className="w-8 h-8 rounded-lg bg-purple-600/10 border border-purple-900/40 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-            </div>
-            <h2 className="text-2xl font-sans font-extrabold text-white tracking-tight leading-tight">
-              Get Started for Free. <br />
-              Add credit details only when scaling.
-            </h2>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Every Hobby account features 3 personal projects, full access to custom redirect headers, wildcard Let’s Encrypt domain SSL certifications, and 100 GB premium edge data limits.
-            </p>
-          </div>
+        <div className="hidden md:flex flex-col justify-center h-full bg-zinc-950/60 border border-zinc-900 rounded-2xl p-8 space-y-8">
 
-          {/* Testimonial preview badge */}
-          <div className="bg-brand-card/75 border border-brand-border p-5 rounded-2xl space-y-3 relative overflow-hidden">
-            <p className="text-xs text-gray-300 italic font-sans leading-relaxed">
-              "We migrated all of our heavy client panels over to CloudForge Edge. In under 24 hours, our static asset load speeds saw a global drop of 40%, and our devops pipeline is finally completely automated."
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white">
-                M
-              </div>
-              <div>
-                <span className="block text-xs font-bold text-white">Marcus Vance</span>
-                <span className="block text-[10px] font-mono text-gray-500">Lead Architect, Linear Labs</span>
-              </div>
-            </div>
-          </div>
-        </div>
+  {/* Deploy with confidence */}
+  <div className="flex items-start gap-4">
+    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
+      <Rocket className="w-5 h-5 text-orange-400" />
+    </div>
+
+    <div>
+      <h3 className="text-lg font-bold text-white">
+        Deploy with confidence
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-400 leading-7">
+        Deploy directly from your Git repository with a clean, guided
+        workflow. Build, monitor, and manage your applications from one
+        place.
+      </p>
+    </div>
+  </div>
+
+  <div className="border-t border-zinc-800"></div>
+
+  {/* AI Assistant */}
+  <div className="flex items-start gap-4">
+    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
+      <Bot className="w-5 h-5 text-orange-400" />
+    </div>
+
+    <div>
+      <h3 className="text-lg font-bold text-white">
+        AI that helps, not confuses
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-400 leading-7">
+        HAVN explains deployment errors in plain English, suggests fixes,
+        and helps you move faster whether you're just starting or already
+        experienced.
+      </p>
+    </div>
+  </div>
+
+  <div className="border-t border-zinc-800"></div>
+
+  {/* Build & Grow */}
+  <div className="flex items-start gap-4">
+    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
+      <BarChart3 className="w-5 h-5 text-orange-400" />
+    </div>
+
+    <div>
+      <h3 className="text-lg font-bold text-white">
+        Build and grow
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-400 leading-7">
+        Track deployments, monitor project history, and keep every release
+        organized as your applications evolve.
+      </p>
+    </div>
+  </div>
+
+</div>
       </div>
     </main>
   );
