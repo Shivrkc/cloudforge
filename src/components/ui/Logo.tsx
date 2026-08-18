@@ -15,35 +15,35 @@ export default function Logo({
       className={`flex items-center gap-3 group ${className}`}
       aria-label="HAVN Home"
     >
-      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 via-orange-600 to-amber-500 shadow-lg shadow-orange-500/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-orange-500/40">
+      {/* Cloud Logo */}
+      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 border border-white/30 shadow-[0_4px_16px_rgba(255,255,255,0.15)] backdrop-blur-md transition-all duration-300 group-hover:bg-white/25 group-hover:scale-105">
         <svg
-          className="h-5 w-5 text-white"
+          className="h-6 w-6 text-white"
           viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
         >
-          <path d="M13 2L4 14h6l-1 8 11-14h-6l1-6z" />
+          <path d="M18.5 10.5C18.22 7.42 15.63 5 12.5 5C9.74 5 7.4 6.88 6.7 9.45C4.08 9.6 2 11.78 2 14.45C2 17.21 4.24 19.45 7 19.45H18C20.76 19.45 23 17.21 23 14.45C23 12.04 21.3 10.03 18.5 10.5Z" />
         </svg>
       </div>
 
+      {/* Brand */}
       <div className="flex flex-col leading-none">
         <div className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-tight text-white">
-            HAVN
+          <span className="text-[28px] font-medium tracking-tight text-white">
+            havn
           </span>
 
           {showVersion && (
-            <span className="rounded-md border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-300">
+            <span className="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/80">
               v1.0
             </span>
           )}
         </div>
 
-        <span className="text-xs tracking-wide text-zinc-400">
-          From Code to Cloud
+        <span className="mt-1 text-xs tracking-wide text-white/50">
+          
         </span>
       </div>
     </Link>

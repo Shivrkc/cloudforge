@@ -1,11 +1,13 @@
-import { useState, FormEvent } from 'react';
-import {Mail,Lock,Eye,EyeOff,Github,Chrome,User,Rocket,Bot,BarChart3,} from "lucide-react";
+import { useState, FormEvent, useEffect, useRef } from 'react';
+import { Mail, Lock, Eye, EyeOff, Github, Chrome, User, Rocket, Bot, BarChart3, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import { register } from "../services/auth.service";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,46 +16,160 @@ export default function Signup() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+
+  // High-Altitude Blue Sky & Realistic Horizontal Drifting Cloud Canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Realistic Cloud Formations
+    const cloudCount = 38;
+    interface CloudPuff {
+      x: number;
+      y: number;
+      z: number;
+      radius: number;
+      opacity: number;
+      driftSpeed: number;
+    }
+
+    const clouds: CloudPuff[] = Array.from({ length: cloudCount }, () => ({
+      x: Math.random() * width,
+      y: height * 0.12 + Math.random() * (height * 0.78),
+      z: Math.random(),
+      radius: 130 + Math.random() * 210,
+      opacity: 0.35 + Math.random() * 0.4,
+      driftSpeed: 0.18 + Math.random() * 0.32,
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Deep Rich High-Altitude Sky Blue Atmospheric Gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+      skyGrad.addColorStop(0, '#0284c7');    // Deep Vibrant Sky Blue Top
+      skyGrad.addColorStop(0.30, '#38bdf8'); // Clear Mid Sky Blue
+      skyGrad.addColorStop(0.65, '#7dd3fc'); // Atmospheric Atmosphere Blue
+      skyGrad.addColorStop(0.88, '#bae6fd'); // Soft Horizon Sky Blue
+      skyGrad.addColorStop(1, '#e0f2fe');    // Natural Crisp Base
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Natural Sunlight Atmospheric Bloom
+      const sunGlow = ctx.createRadialGradient(
+        width * 0.5,
+        height * 0.15,
+        10,
+        width * 0.5,
+        height * 0.15,
+        width * 0.65
+      );
+      sunGlow.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
+      sunGlow.addColorStop(0.4, 'rgba(224, 242, 254, 0.35)');
+      sunGlow.addColorStop(0.8, 'rgba(125, 211, 252, 0.1)');
+      sunGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = sunGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // Render Layered Volumetric White Clouds
+      clouds.sort((a, b) => a.z - b.z);
+
+      clouds.forEach((cloud) => {
+        // Continuous Horizontal Drift
+        cloud.x += cloud.driftSpeed * (0.6 + cloud.z * 0.4);
+        if (cloud.x - cloud.radius > width) {
+          cloud.x = -cloud.radius;
+          cloud.y = height * 0.12 + Math.random() * (height * 0.78);
+        }
+
+        const scale = 0.5 + cloud.z * 0.8;
+        const currentRadius = cloud.radius * scale;
+        const currentOpacity = cloud.opacity;
+
+        const cloudGlow = ctx.createRadialGradient(
+          cloud.x - currentRadius * 0.2,
+          cloud.y - currentRadius * 0.25,
+          currentRadius * 0.05,
+          cloud.x,
+          cloud.y,
+          currentRadius
+        );
+
+        cloudGlow.addColorStop(0, `rgba(255, 255, 255, ${currentOpacity * 0.95})`);
+        cloudGlow.addColorStop(0.5, `rgba(248, 250, 252, ${currentOpacity * 0.8})`);
+        cloudGlow.addColorStop(0.85, `rgba(226, 232, 240, ${currentOpacity * 0.25})`);
+        cloudGlow.addColorStop(1, 'rgba(203, 213, 225, 0)');
+
+        ctx.beginPath();
+        ctx.fillStyle = cloudGlow;
+        ctx.arc(cloud.x, cloud.y, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-  
+
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("Please fill in all requested fields.");
       return;
     }
-  
+
     if (!email.includes("@")) {
       setError("Please provide a valid company or email.");
       return;
     }
-  
+
     if (password.length < 8) {
       setError("Security policy requires passwords of at least 8 characters.");
       return;
     }
-  
+
     if (password !== confirmPassword) {
       setError("Password fields do not match. Please re-type.");
       return;
     }
-  
+
     if (!agreeTerms) {
       setError("You must consent to the terms.");
       return;
     }
-  
+
     try {
       setIsLoading(true);
-  
+
       await register({
         name,
         email,
         password,
       });
-  
-      navigate(ROUTES.LOGIN);
+
+      setRegistrationComplete(true);
     } catch (error: any) {
       setError(
         error?.response?.data?.message ||
@@ -62,198 +178,326 @@ export default function Signup() {
     } finally {
       setIsLoading(false);
     }
-  };;
+  };
+
+  if (registrationComplete) {
+    return (
+      <main
+        id="signup-container"
+        className="min-h-screen flex flex-col justify-between relative overflow-x-hidden font-sans selection:bg-sky-200"
+      >
+        {/* Background Animated Sky Canvas */}
+        <canvas
+          ref={canvasRef}
+          className="fixed inset-0 w-full h-full pointer-events-none z-0"
+        />
+
+        {/* Success Message Card */}
+        <div className="flex-1 flex items-center justify-center pt-24 sm:pt-28 pb-10 px-4 sm:px-6 lg:px-8 relative z-20">
+          <div className="max-w-md w-full backdrop-blur-2xl bg-white/60 hover:bg-white/65 border border-white/90 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-sky-950/20 text-center relative transition-all duration-300 motion-safe:animate-fade-in-up space-y-6">
+            <div className="w-12 h-12 rounded-2xl bg-blue-100/90 border border-blue-200 flex items-center justify-center mx-auto text-blue-600 shadow-2xs">
+              <Mail className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Check your email</h2>
+              <p className="text-xs text-slate-700 font-semibold">
+                We've sent a verification link to
+              </p>
+              <p className="text-sm font-bold text-blue-600 break-all">{email}</p>
+            </div>
+
+            <p className="text-xs text-slate-700 font-semibold leading-relaxed">
+              Verify your email address before signing in to HAVN. Check your spam or junk folder if you don't see it.
+            </p>
+
+            <button
+              onClick={() => navigate(ROUTES.LOGIN)}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
+
+        {/* Minimal Footer */}
+        <footer className="relative z-20 py-4 text-center text-xs text-slate-800 font-bold">
+          © {new Date().getFullYear()} HAVN Inc. All rights reserved.
+        </footer>
+      </main>
+    );
+  }
 
   return (
-    <main id="signup-container" className="min-h-screen bg-brand-dark flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-[#09090a]/60 border border-zinc-900 rounded-3xl p-6 sm:p-10 backdrop-blur-xl relative z-10">
-        
-        {/* Left Side Content - Form Panel */}
-        <div className="space-y-6 w-full">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-sans font-extrabold text-white tracking-tight">Create your account</h2>
-            <p className="text-xs text-gray-400 font-sans">
-            Create an account to start deploying your projects.
+    <main
+      id="signup-container"
+      className="min-h-screen flex flex-col justify-between relative overflow-x-hidden font-sans selection:bg-sky-200"
+    >
+      {/* Background Animated Sky Canvas */}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full pointer-events-none z-0"
+      />
+
+      {/* Main Floating Translucent Glass Signup Interface */}
+      <div className="flex-1 flex items-center justify-center pt-24 sm:pt-28 pb-10 px-4 sm:px-6 lg:px-8 relative z-20">
+        <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center backdrop-blur-2xl bg-white/60 hover:bg-white/65 border border-white/90 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-sky-950/20 relative transition-all duration-300 motion-safe:animate-fade-in-up">
+
+          {/* Left Side Content - Form Panel */}
+          <div className="space-y-6 w-full">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100/90 border border-blue-200 text-blue-900 text-[11px] font-bold shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                CREATE ACCOUNT
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-sans font-extrabold text-slate-900 tracking-tight">Get started with HAVN</h2>
+              <p className="text-xs text-slate-700 font-sans font-semibold">
+                Create an account to start deploying your projects.
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-300/80 rounded-xl text-xs text-red-800 font-semibold flex items-center gap-2 backdrop-blur-sm animate-shake">
+                ⚠️ {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Mai shiv hoon"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 shadow-2xs focus:ring-2 focus:ring-blue-500/20 font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 shadow-2xs focus:ring-2 focus:ring-blue-500/20 font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-10 py-2.5 bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 shadow-2xs focus:ring-2 focus:ring-blue-500/20 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">Confirm Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 shadow-2xs focus:ring-2 focus:ring-blue-500/20 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <label className="flex items-start gap-2.5 text-xs text-slate-800 font-semibold select-none cursor-pointer leading-normal group">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer mt-0.5"
+                  />
+                  <span className="group-hover:text-slate-900 transition-colors">I agree to the Terms of Service and Privacy Policy.</span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-70 text-white font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all active:scale-[0.98] mt-2 cursor-pointer"
+              >
+                {isLoading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Creating your account...
+                  </span>
+                ) : (
+                  'Create Account'
+                )}
+              </button>
+            </form>
+
+            <div className="relative my-6 text-center">
+              <span className="absolute inset-x-0 top-1/2 h-px bg-slate-300/80 -translate-y-1/2"></span>
+              <span className="relative bg-white/90 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest rounded-full">
+                or integrate with
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 py-2.5 border border-white/90 hover:border-blue-300 bg-white/75 hover:bg-white text-xs text-slate-800 font-bold rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer"
+              >
+                <Github className="w-4 h-4 text-slate-800" /> GitHub
+              </button>
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 py-2.5 border border-white/90 hover:border-blue-300 bg-white/75 hover:bg-white text-xs text-slate-800 font-bold rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer"
+              >
+                <Chrome className="w-4 h-4 text-blue-600" /> Google
+              </button>
+            </div>
+
+            <p className="text-center text-xs text-slate-700 font-sans pt-2 font-semibold">
+              Already have an account?{' '}
+              <button onClick={() => navigate(ROUTES.LOGIN)} className="text-blue-600 hover:text-blue-700 font-extrabold hover:underline cursor-pointer">Log in</button>
             </p>
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-950/40 border border-red-900/50 rounded-xl text-xs text-red-400 font-mono">
-              ⚠️ {error}
-            </div>
-          )}
+          {/* Right Side Content - Translucent Glass Marketing Info Panel */}
+          <div className="hidden md:flex flex-col justify-center h-full backdrop-blur-xl bg-white/40 border border-white/80 rounded-2xl p-7 space-y-7 shadow-2xs">
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Shiv Gupta"
-                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
-                />
+            {/* Deploy with confidence */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-100/90 border border-blue-200 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <Rocket className="w-5 h-5 text-blue-600" />
+              </div>
+
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  Deploy with confidence
+                </h3>
+
+                <p className="mt-1.5 text-xs text-slate-700 leading-relaxed font-semibold">
+                  Deploy directly from your Git repository with a clean, guided
+                  workflow. Build, monitor, and manage your applications from one
+                  place.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block"> Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Maishivhoon@gmail.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-sans"
-                />
+            <div className="border-t border-slate-200/80"></div>
+
+            {/* AI Assistant */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-100/90 border border-blue-200 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <Bot className="w-5 h-5 text-blue-600" />
+              </div>
+
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  AI that helps, not confuses
+                </h3>
+
+                <p className="mt-1.5 text-xs text-slate-700 leading-relaxed font-semibold">
+                  HAVN explains deployment errors in plain English, suggests fixes,
+                  and helps you move faster whether you're just starting or already
+                  experienced.
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
-                  />
-                </div>
+            <div className="border-t border-slate-200/80"></div>
+
+            {/* Build & Grow */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-100/90 border border-blue-200 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Confirm Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-zinc-950 border border-zinc-850 focus:border-orange-500 rounded-xl text-xs text-white placeholder-gray-600 outline-none transition-all font-mono"
-                  />
-                </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">
+                  Build and grow
+                </h3>
+
+                <p className="mt-1.5 text-xs text-slate-700 leading-relaxed font-semibold">
+                  Track deployments, monitor project history, and keep every release
+                  organized as your applications evolve.
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              <label className="flex items-start gap-2.5 text-xs text-gray-400 font-sans select-none cursor-pointer leading-normal">
-                <input
-                  type="checkbox"
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="rounded mt-0.5 bg-zinc-950 border-zinc-800 text-orange-500 accent-orange-500 focus:ring-0"
-                />
-                <span>I agree to the Terms of Service and Privacy Policy.</span>
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-orange-500 hover:bg-orange-500 disabled:bg-orange-800 text-white font-semibold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 mt-2 cursor-pointer"
-            >
-              {isLoading ? 'Creating your account...' : 'Create Account'}
-            </button>
-          </form>
-
-          <div className="relative my-4 text-center">
-            <span className="absolute inset-x-0 top-1/2 h-px bg-zinc-900 -translate-y-1/2"></span>
-            <span className="relative bg-[#0b0b0c] px-3 text-[10px] font-mono text-gray-500 uppercase tracking-widest">or integrate with</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 py-2.5 border border-zinc-800 bg-zinc-950/40 text-xs text-white font-medium rounded-xl hover:bg-zinc-950 transition-all cursor-pointer"
-            >
-              <Github className="w-4 h-4" /> GitHub
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 py-2.5 border border-zinc-800 bg-zinc-950/40 text-xs text-white font-medium rounded-xl hover:bg-zinc-950 transition-all cursor-pointer"
-            >
-              <Chrome className="w-4 h-4" /> Google
-            </button>
-          </div>
-
-          <p className="text-center text-xs text-gray-400 font-sans">
-          Already have an account?{' '}
-            <button onClick={() => navigate(ROUTES.LOGIN)} className="text-orange-400 hover:underline font-medium">Log in</button>
-          </p>
         </div>
-
-        {/* Right Side Content - Marketing Data Info Panel */}
-        <div className="hidden md:flex flex-col justify-center h-full bg-zinc-950/60 border border-zinc-900 rounded-2xl p-8 space-y-8">
-
-  {/* Deploy with confidence */}
-  <div className="flex items-start gap-4">
-    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
-      <Rocket className="w-5 h-5 text-orange-400" />
-    </div>
-
-    <div>
-      <h3 className="text-lg font-bold text-white">
-        Deploy with confidence
-      </h3>
-
-      <p className="mt-2 text-sm text-gray-400 leading-7">
-        Deploy directly from your Git repository with a clean, guided
-        workflow. Build, monitor, and manage your applications from one
-        place.
-      </p>
-    </div>
-  </div>
-
-  <div className="border-t border-zinc-800"></div>
-
-  {/* AI Assistant */}
-  <div className="flex items-start gap-4">
-    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
-      <Bot className="w-5 h-5 text-orange-400" />
-    </div>
-
-    <div>
-      <h3 className="text-lg font-bold text-white">
-        AI that helps, not confuses
-      </h3>
-
-      <p className="mt-2 text-sm text-gray-400 leading-7">
-        HAVN explains deployment errors in plain English, suggests fixes,
-        and helps you move faster whether you're just starting or already
-        experienced.
-      </p>
-    </div>
-  </div>
-
-  <div className="border-t border-zinc-800"></div>
-
-  {/* Build & Grow */}
-  <div className="flex items-start gap-4">
-    <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-900/40 flex items-center justify-center flex-shrink-0">
-      <BarChart3 className="w-5 h-5 text-orange-400" />
-    </div>
-
-    <div>
-      <h3 className="text-lg font-bold text-white">
-        Build and grow
-      </h3>
-
-      <p className="mt-2 text-sm text-gray-400 leading-7">
-        Track deployments, monitor project history, and keep every release
-        organized as your applications evolve.
-      </p>
-    </div>
-  </div>
-
-</div>
       </div>
+
+      {/* Minimal Footer */}
+      <footer className="relative z-20 py-4 text-center text-xs text-slate-800 font-bold">
+        © {new Date().getFullYear()} HAVN Inc. All rights reserved.
+      </footer>
+
+      {/* Embedded Animation Styles */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+
+        .animate-shake {
+          animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .animate-fade-in-up, .animate-shake {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+          .transition-all, .transition-colors {
+            transition: none !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }

@@ -1,19 +1,33 @@
 generator client {
-    provider = "prisma-client-js"
-  }
-  
-  datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-  }
-  
-  model User {
-    id        String   @id @default(cuid())
-    name      String
-    email     String   @unique
-    password  String?
-    avatar    String?
-    provider  String   @default("credentials")
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-  }
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String                    @id @default(cuid())
+  name                String
+  email               String                    @unique
+  password            String?
+  avatar              String?
+  provider            String                    @default("credentials")
+  emailVerified       Boolean                   @default(false)
+  verificationTokens  EmailVerificationToken[]
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

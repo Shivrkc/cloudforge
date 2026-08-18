@@ -2,6 +2,11 @@ import bcrypt from "bcrypt";
 import prisma from "../lib/prisma";
 import { AUTH_MESSAGES } from "../constants/messages";
 import { generateToken } from "../utils/jwt";
+import {
+  generateVerificationToken,
+  hashVerificationToken,
+} from "../utils/emailVerification";
+import { sendVerificationEmail } from "./email.service";
 
 interface RegisterData {
   name: string;
@@ -34,16 +39,32 @@ export const register = async (data: RegisterData) => {
       name,
       email,
       password: hashedPassword,
+      emailVerified: false,
     },
   });
 
+  const verificationToken = generateVerificationToken();
+  const tokenHash = hashVerificationToken(verificationToken);
+
+  await prisma.emailVerificationToken.create({
+    data: {
+      tokenHash,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+    },
+  });
+
+  await sendVerificationEmail(user.email, verificationToken);
+
   return {
     success: true,
-    message: AUTH_MESSAGES.USER_REGISTERED,
+    message:
+      "Account created. Please check your email to verify your account.",
     user: {
       id: user.id,
       name: user.name,
       email: user.email,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
     },
   };
@@ -71,7 +92,10 @@ export const login = async (data: LoginData) => {
     throw new Error(AUTH_MESSAGES.INVALID_CREDENTIALS);
   }
 
-  // Generate JWT Token
+  if (!user.emailVerified) {
+    throw new Error("Please verify your email before logging in.");
+  }
+
   const token = generateToken({
     id: user.id,
     email: user.email,
@@ -85,10 +109,12 @@ export const login = async (data: LoginData) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
     },
   };
 };
+
 export const getCurrentUser = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -106,7 +132,57 @@ export const getCurrentUser = async (userId: string) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
     },
+  };
+};
+
+export const verifyEmail = async (token: string) => {
+  if (!token) {
+    throw new Error("Verification token is required.");
+  }
+
+  const tokenHash = hashVerificationToken(token);
+
+  const verificationToken =
+    await prisma.emailVerificationToken.findUnique({
+      where: {
+        tokenHash,
+      },
+    });
+
+  if (!verificationToken) {
+    throw new Error("Invalid or expired verification token.");
+  }
+
+  if (verificationToken.expiresAt < new Date()) {
+    await prisma.emailVerificationToken.delete({
+      where: {
+        id: verificationToken.id,
+      },
+    });
+
+    throw new Error("Verification token has expired.");
+  }
+
+  await prisma.user.update({
+    where: {
+      id: verificationToken.userId,
+    },
+    data: {
+      emailVerified: true,
+    },
+  });
+
+  await prisma.emailVerificationToken.delete({
+    where: {
+      id: verificationToken.id,
+    },
+  });
+
+  return {
+    success: true,
+    message: "Email verified successfully.",
   };
 };

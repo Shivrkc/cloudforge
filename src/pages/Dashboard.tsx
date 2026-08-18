@@ -1,16 +1,16 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, useRef } from 'react';
 import { 
-  Plus, Search, Github, GitBranch, ArrowRight, CheckCircle2, 
-  AlertTriangle, Clock, RefreshCw, Terminal, Database, Shield, 
-  Cpu, Zap, Settings, Key, Trash, ExternalLink, Activity, Sparkles, User, Globe
+  Plus, Search, Github, GitBranch, CheckCircle2, 
+  AlertTriangle, RefreshCw, Database, Key, Trash, 
+  ExternalLink, ShieldCheck, Activity, Layers, Server, 
+  Clock, TrendingUp, Cpu
 } from 'lucide-react';
-import { Project, Deployment, Repository, BuildLog } from '../types';
+import { Project, Deployment, Repository } from '../types';
 import { MOCK_PROJECTS, MOCK_DEPLOYMENTS, MOCK_REPOSITORIES, SIMULATED_BUILD_STEPS } from '../data/mockData';
 
-
-
-
 export default function Dashboard() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
   const [deployments, setDeployments] = useState<Deployment[]>(MOCK_DEPLOYMENTS);
   const [repos] = useState<Repository[]>(MOCK_REPOSITORIES);
@@ -38,10 +38,121 @@ export default function Dashboard() {
   ]);
   const [newEnvKey, setNewEnvKey] = useState('');
   const [newEnvValue, setNewEnvValue] = useState('');
-  const [newEnvProject, setNewEnvProject] = useState(MOCK_PROJECTS[0].name);
+  const [newEnvProject, setNewEnvProject] = useState(MOCK_PROJECTS[0]?.name || 'nexus-analytics-dashboard');
 
   // Search filter
   const [searchProjectQuery, setSearchProjectQuery] = useState('');
+
+  // Subtle High-Altitude Sky Background Canvas Animation
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const cloudCount = 32;
+    interface CloudPuff {
+      x: number;
+      y: number;
+      z: number;
+      radius: number;
+      opacity: number;
+      driftSpeed: number;
+    }
+
+    const clouds: CloudPuff[] = Array.from({ length: cloudCount }, () => ({
+      x: Math.random() * width,
+      y: height * 0.1 + Math.random() * (height * 0.8),
+      z: Math.random(),
+      radius: 140 + Math.random() * 220,
+      opacity: 0.25 + Math.random() * 0.35,
+      driftSpeed: 0.15 + Math.random() * 0.25,
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Deep Atmospheric Sky Blue Background Gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+      skyGrad.addColorStop(0, '#0284c7');
+      skyGrad.addColorStop(0.32, '#38bdf8');
+      skyGrad.addColorStop(0.68, '#7dd3fc');
+      skyGrad.addColorStop(0.9, '#bae6fd');
+      skyGrad.addColorStop(1, '#e0f2fe');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Ambient Sunlight Radial Lighting
+      const sunGlow = ctx.createRadialGradient(
+        width * 0.5,
+        height * 0.15,
+        10,
+        width * 0.5,
+        height * 0.15,
+        width * 0.65
+      );
+      sunGlow.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+      sunGlow.addColorStop(0.4, 'rgba(224, 242, 254, 0.3)');
+      sunGlow.addColorStop(0.85, 'rgba(125, 211, 252, 0.1)');
+      sunGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = sunGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // Render Soft Layered Drifting Clouds
+      clouds.sort((a, b) => a.z - b.z);
+
+      clouds.forEach((cloud) => {
+        cloud.x += cloud.driftSpeed * (0.6 + cloud.z * 0.4);
+        if (cloud.x - cloud.radius > width) {
+          cloud.x = -cloud.radius;
+          cloud.y = height * 0.1 + Math.random() * (height * 0.8);
+        }
+
+        const scale = 0.5 + cloud.z * 0.8;
+        const currentRadius = cloud.radius * scale;
+        const currentOpacity = cloud.opacity;
+
+        const cloudGlow = ctx.createRadialGradient(
+          cloud.x - currentRadius * 0.2,
+          cloud.y - currentRadius * 0.25,
+          currentRadius * 0.05,
+          cloud.x,
+          cloud.y,
+          currentRadius
+        );
+
+        cloudGlow.addColorStop(0, `rgba(255, 255, 255, ${currentOpacity * 0.95})`);
+        cloudGlow.addColorStop(0.5, `rgba(248, 250, 252, ${currentOpacity * 0.75})`);
+        cloudGlow.addColorStop(0.85, `rgba(226, 232, 240, ${currentOpacity * 0.2})`);
+        cloudGlow.addColorStop(1, 'rgba(203, 213, 225, 0)');
+
+        ctx.beginPath();
+        ctx.fillStyle = cloudGlow;
+        ctx.arc(cloud.x, cloud.y, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   // Handle mock repo connection & building simulation
   const handleConnectRepo = (repo: Repository) => {
@@ -66,7 +177,6 @@ export default function Dashboard() {
       } else {
         clearInterval(interval);
         
-        // Build succeeded! Add newly created project & deployment
         const newProjId = `p-${Date.now()}`;
         const newProjName = activeBuildingRepo.name;
         
@@ -96,7 +206,6 @@ export default function Dashboard() {
         setProjects(prev => [newProjectObj, ...prev]);
         setDeployments(prev => [newDeploymentObj, ...prev]);
         
-        // Reset states
         setTimeout(() => {
           setIsBuildingNewProject(false);
           setIsConnectModalOpen(false);
@@ -159,103 +268,142 @@ export default function Dashboard() {
     p.repo.toLowerCase().includes(searchProjectQuery.toLowerCase())
   );
 
+  const totalDeployments = deployments.length;
+  const activeProjectsCount = projects.length;
+
   return (
-    <div id="dashboard-workspace" className="min-h-screen bg-[#070709] text-gray-100 flex flex-col pt-18">
+    <div id="dashboard-workspace" className="min-h-screen flex flex-col relative overflow-x-hidden font-sans selection:bg-sky-200">
       
-      {/* Upper sub-header bar dashboard */}
-      <header className="border-b border-zinc-900 bg-[#09090c]/90 sticky top-18 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between py-6 gap-4">
+      {/* Background Animated Sky Canvas */}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full pointer-events-none z-0"
+      />
+
+      {/* Main Container - Padded below Top Navigation Header */}
+      <div className="pt-24 sm:pt-28 pb-16 flex-1 flex flex-col relative z-20 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        
+        {/* Workspace Sub-Header Glass Panel */}
+        <section className="backdrop-blur-2xl bg-white/60 hover:bg-white/65 border border-white/90 rounded-3xl p-6 shadow-xl shadow-sky-950/10 transition-all duration-300">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             
+            {/* Workspace Identity */}
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 rounded-full bg-blue-950/80 border border-blue-900 flex items-center justify-center text-blue-400 font-bold font-sans">
-                U
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold flex items-center justify-center text-lg shadow-md shadow-blue-600/30">
+                DM
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold text-white font-sans">dev-master</h1>
-                  <span className="text-[10px] bg-blue-950 text-blue-400 border border-blue-900 px-2 py-0.5 rounded font-mono font-bold leading-none">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">dev-master</h1>
+                  <span className="text-[11px] bg-blue-100/90 text-blue-900 border border-blue-200 px-2.5 py-0.5 rounded-full font-bold shadow-2xs">
                     Hobby Plan
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 font-mono">Personal Developer Workspace</p>
+                <p className="text-xs text-slate-700 font-semibold">Personal Developer Workspace • Cloud Deployment Engine</p>
               </div>
             </div>
 
+            {/* Main Workspace Actions */}
             <div className="flex items-center gap-3">
-  <button
-    type="button"
-    onClick={() => setIsConnectModalOpen(true)}
-    className="bg-blue-600 hover:bg-blue-500 text-white font-sans font-medium text-sm py-2.5 px-4.5 rounded-xl transition-all shadow-md shadow-blue-950 flex items-center gap-2 cursor-pointer"
-  >
-    <Plus className="w-4 h-4" />
-    Connect Repository
-  </button>
-</div>
+              <button
+                type="button"
+                onClick={() => setIsConnectModalOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-3 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 flex items-center gap-2 active:scale-[0.98] cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Connect Repository
+              </button>
+            </div>
 
           </div>
 
-          {/* Sub Navigation tabs */}
-          <div className="flex items-center space-x-6">
+          {/* SaaS Navigation Tabs */}
+          <div className="mt-6 pt-4 border-t border-slate-200/80 flex items-center space-x-2 sm:space-x-4 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`pb-3 text-sm font-sans font-medium transition-colors relative cursor-pointer ${
-                activeTab === 'overview' ? 'text-white' : 'text-gray-400 hover:text-white'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === 'overview'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
+              <Layers className="w-3.5 h-3.5" />
               Overview
-              {activeTab === 'overview' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full"></div>
-              )}
             </button>
             <button
               onClick={() => setActiveTab('deployments')}
-              className={`pb-3 text-sm font-sans font-medium transition-colors relative cursor-pointer ${
-                activeTab === 'deployments' ? 'text-white' : 'text-gray-400 hover:text-white'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === 'deployments'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
+              <Activity className="w-3.5 h-3.5" />
               Deployments
-              {activeTab === 'deployments' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full"></div>
-              )}
             </button>
             <button
               onClick={() => setActiveTab('databases')}
-              className={`pb-3 text-sm font-sans font-medium transition-colors relative cursor-pointer ${
-                activeTab === 'databases' ? 'text-white' : 'text-gray-400 hover:text-white'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === 'databases'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
+              <Database className="w-3.5 h-3.5" />
               Databases
-              {activeTab === 'databases' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full"></div>
-              )}
             </button>
             <button
               onClick={() => setActiveTab('env-vars')}
-              className={`pb-3 text-sm font-sans font-medium transition-colors relative cursor-pointer ${
-                activeTab === 'env-vars' ? 'text-white' : 'text-gray-400 hover:text-white'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === 'env-vars'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
+              <Key className="w-3.5 h-3.5" />
               Environment Variables
-              {activeTab === 'env-vars' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full"></div>
-              )}
             </button>
           </div>
+        </section>
 
-        </div>
-      </header>
-
-      {/* Main dashboard view container body */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        
-        {/* Tab 1: OVERVIEW */}
+        {/* Tab Content Areas */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
+          <div className="space-y-6 motion-safe:animate-fade-in-up">
             
-            {/* Search filter input */}
+            {/* Analytics Statistics Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="backdrop-blur-xl bg-white/60 border border-white/90 rounded-2xl p-4 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Server className="w-3.5 h-3.5 text-blue-600" /> Active Projects
+                </span>
+                <p className="text-2xl font-extrabold text-slate-900">{activeProjectsCount}</p>
+              </div>
+
+              <div className="backdrop-blur-xl bg-white/60 border border-white/90 rounded-2xl p-4 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Activity className="w-3.5 h-3.5 text-blue-600" /> Total Deploys
+                </span>
+                <p className="text-2xl font-extrabold text-slate-900">{totalDeployments}</p>
+              </div>
+
+              <div className="backdrop-blur-xl bg-white/60 border border-white/90 rounded-2xl p-4 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> Success Rate
+                </span>
+                <p className="text-2xl font-extrabold text-slate-900">99.9%</p>
+              </div>
+
+              <div className="backdrop-blur-xl bg-white/60 border border-white/90 rounded-2xl p-4 shadow-sm space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-indigo-600" /> Avg Deploy Time
+                </span>
+                <p className="text-2xl font-extrabold text-slate-900">14s</p>
+              </div>
+            </div>
+
+            {/* Premium Command Search Bar */}
             <div className="relative max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Search className="w-4 h-4" />
               </div>
               <input
@@ -263,51 +411,51 @@ export default function Dashboard() {
                 placeholder="Search active projects or git branches..."
                 value={searchProjectQuery}
                 onChange={(e) => setSearchProjectQuery(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-900 focus:border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none"
+                className="w-full backdrop-blur-xl bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 font-semibold placeholder:text-slate-400 outline-none transition-all shadow-2xs focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
-            {/* Projects list cards */}
+            {/* Projects Grid */}
             {filteredProjects.length === 0 ? (
-              <div className="text-center py-24 border border-dashed border-zinc-900 rounded-2xl bg-[#09090c]/50">
-                <AlertTriangle className="w-12 h-12 text-yellow-500/80 mx-auto mb-4" />
-                <p className="text-sm text-gray-400 font-sans">No projects match your filter query.</p>
+              <div className="text-center py-20 backdrop-blur-xl bg-white/50 border border-dashed border-slate-300 rounded-3xl p-8 space-y-3">
+                <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
+                <p className="text-sm font-bold text-slate-800">No projects match your search filter.</p>
+                <p className="text-xs text-slate-600">Try searching for a different repo or project name.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="bg-brand-card border border-brand-border hover:border-zinc-800 rounded-2xl p-6 space-y-5 transition-all shadow-md group relative overflow-hidden"
+                    className="backdrop-blur-2xl bg-white/60 hover:bg-white/80 border border-white/90 rounded-2xl p-6 space-y-5 shadow-lg shadow-sky-950/5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
                   >
-                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    
                     <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-sans font-bold text-base text-white truncate group-hover:text-blue-400 transition-colors">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="font-extrabold text-base text-slate-900 truncate group-hover:text-blue-600 transition-colors">
                           {project.name}
                         </h3>
                         {project.status === 'ready' ? (
-                          <span className="flex h-2 w-2 relative mt-1.5 flex-shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100/90 border border-emerald-200 text-emerald-800 text-[10px] font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Live
                           </span>
                         ) : (
-                          <span className="flex h-2 w-2 relative mt-1.5 flex-shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                          <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100/90 border border-amber-200 text-amber-800 text-[10px] font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            Building
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500 font-mono">
-                        <Github className="w-3.5 h-3.5" />
+                      
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
+                        <Github className="w-3.5 h-3.5 text-slate-800" />
                         <span className="truncate">{project.repo}</span>
                       </div>
                     </div>
 
-                    <div className="bg-zinc-950/60 border border-zinc-900/60 p-3 rounded-xl space-y-2">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-gray-500">Live URL:</span>
+                    <div className="bg-white/70 border border-white/90 p-3.5 rounded-xl space-y-2 shadow-2xs">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-slate-500">Live URL</span>
                         <a
                           href={project.url}
                           target="_blank"
@@ -316,80 +464,120 @@ export default function Dashboard() {
                             e.preventDefault();
                             alert(`Visiting live site simulator at ${project.url}`);
                           }}
-                          className="text-blue-400 hover:underline flex items-center gap-1"
+                          className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 hover:underline"
                         >
                           Visit <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-gray-500">Uptime Metric:</span>
-                        <span className="text-green-400 font-semibold">99.99%</span>
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-slate-500">Uptime</span>
+                        <span className="text-emerald-700 font-bold">99.99%</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-900/40 text-xs text-gray-500 font-mono">
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 text-[11px] text-slate-600 font-semibold">
                       <span>Updated {project.updatedAt}</span>
-                      <span>{project.deploymentsCount} Deploys</span>
+                      <span className="text-slate-800 font-bold">{project.deploymentsCount} Deploys</span>
                     </div>
-
                   </div>
                 ))}
               </div>
             )}
+
+            {/* Recent Activity Table Container */}
+            <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-2xl overflow-hidden shadow-lg shadow-sky-950/5 space-y-3 p-6">
+              <div className="flex items-center justify-between border-b border-slate-200/80 pb-4">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Recent Deployment Activity</h3>
+                  <p className="text-xs text-slate-600 font-semibold">Latest commits deployed across your workspace repositories</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('deployments')}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-bold hover:underline cursor-pointer"
+                >
+                  View All
+                </button>
+              </div>
+
+              <div className="divide-y divide-slate-200/70">
+                {deployments.slice(0, 3).map((dep) => (
+                  <div key={dep.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/40 rounded-xl px-2 transition-colors">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">{dep.projectName}</span>
+                        <span className="text-[10px] font-mono bg-blue-100 text-blue-900 px-1.5 py-0.2 rounded font-bold">
+                          {dep.branch}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 italic">"{dep.commitMsg}"</p>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs font-semibold">
+                      <span className="text-slate-500">{dep.deployedAt}</span>
+                      <span className="flex items-center gap-1 text-emerald-700 font-bold bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px]">
+                        <CheckCircle2 className="w-3 h-3" /> Live
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
           </div>
         )}
 
         {/* Tab 2: DEPLOYMENTS */}
         {activeTab === 'deployments' && (
-          <div className="bg-brand-card border border-brand-border rounded-2xl overflow-hidden shadow-xl">
-            <div className="glass-header px-6 py-4 border-b border-brand-border">
-              <h2 className="text-sm font-sans font-bold text-white">Recent Repository Deployments</h2>
+          <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl overflow-hidden shadow-xl shadow-sky-950/10 motion-safe:animate-fade-in-up">
+            <div className="px-6 py-5 border-b border-slate-200/80 bg-white/40 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-extrabold text-slate-900">Deployment History</h2>
+                <p className="text-xs text-slate-600 font-semibold">Real-time status of your deployment pipeline runs</p>
+              </div>
             </div>
-            
-            <div className="divide-y divide-zinc-900">
+
+            <div className="divide-y divide-slate-200/80">
               {deployments.map((dep) => (
-                <div key={dep.id} className="p-5.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-zinc-950/20 transition-colors">
+                <div key={dep.id} className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-white/40 transition-colors">
                   
                   <div className="space-y-1.5 max-w-xl">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-sm font-sans font-bold text-white">{dep.projectName}</span>
-                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
-                        dep.environment === 'production' 
-                          ? 'bg-blue-950/50 text-blue-400 border border-blue-900/40' 
-                          : 'bg-zinc-900 text-gray-400 border border-zinc-800'
+                      <span className="text-sm font-extrabold text-slate-900">{dep.projectName}</span>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
+                        dep.environment === 'production'
+                          ? 'bg-blue-100 text-blue-900 border-blue-200'
+                          : 'bg-slate-100 text-slate-800 border-slate-200'
                       }`}>
                         {dep.environment}
                       </span>
                     </div>
 
-                    <p className="text-xs text-gray-400 font-mono italic">
+                    <p className="text-xs text-slate-700 font-semibold italic">
                       "{dep.commitMsg}"
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 font-mono">
-                      <span className="flex items-center gap-1"><GitBranch className="w-3.5 h-3.5" /> {dep.branch}</span>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 font-semibold">
+                      <span className="flex items-center gap-1"><GitBranch className="w-3.5 h-3.5 text-slate-800" /> {dep.branch}</span>
                       <span>SHA: {dep.commitHash}</span>
                       <span>Deployed {dep.deployedAt}</span>
                     </div>
                   </div>
 
-                  {/* Status column */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     {dep.status === 'ready' ? (
-                      <span className="bg-green-950/40 border border-green-900/60 text-green-300 text-xs font-mono px-3 py-1 rounded-full flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Ready
+                      <span className="bg-emerald-100/90 border border-emerald-200 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Ready
                       </span>
                     ) : (
-                      <span className="bg-yellow-950/40 border border-yellow-900/60 text-yellow-300 text-xs font-mono px-3 py-1 rounded-full flex items-center gap-1.5">
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Compiling
+                      <span className="bg-amber-100/90 border border-amber-200 text-amber-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" /> Compiling
                       </span>
                     )}
 
                     <button
                       type="button"
                       onClick={() => alert(`Reviewing compiler diagnostic logs for SHA: ${dep.commitHash}`)}
-                      className="text-xs border border-zinc-800 hover:border-zinc-700 bg-zinc-950/60 text-gray-300 hover:text-white px-3 py-1.5 rounded-lg font-sans transition-colors"
+                      className="text-xs border border-white/90 bg-white/80 hover:bg-white text-slate-800 font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-2xs hover:shadow-xs cursor-pointer"
                     >
                       View Logs
                     </button>
@@ -403,17 +591,17 @@ export default function Dashboard() {
 
         {/* Tab 3: DATABASES */}
         {activeTab === 'databases' && (
-          <div className="space-y-8">
+          <div className="space-y-6 motion-safe:animate-fade-in-up">
             
-            {/* Create DB Panel form */}
-            <div className="bg-brand-card border border-brand-border rounded-2xl p-6 sm:p-8 space-y-6">
+            {/* Create DB Panel Form */}
+            <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl shadow-sky-950/10">
               <div className="space-y-1.5">
-                <span className="text-xs font-mono font-bold text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1">
                   <Database className="w-4 h-4" /> Serverless Cloud PostgreSQL
                 </span>
-                <h2 className="text-lg font-sans font-bold text-white">Provision New Database</h2>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  Spin up transactional, serverless PostgreSQL clusters instantly. Databases scale computing nodes down to zero when idle, saving limits.
+                <h2 className="text-xl font-extrabold text-slate-900">Provision New Database</h2>
+                <p className="text-slate-700 text-xs leading-relaxed font-semibold">
+                  Spin up transactional, serverless PostgreSQL clusters instantly. Databases scale computing nodes automatically.
                 </p>
               </div>
 
@@ -424,13 +612,13 @@ export default function Dashboard() {
                   placeholder="e.g. app-production-db"
                   value={newDbName}
                   onChange={(e) => setNewDbName(e.target.value)}
-                  className="bg-zinc-950 border border-zinc-800 focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none flex-1 font-mono"
+                  className="bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all shadow-2xs focus:ring-2 focus:ring-blue-500/20 font-semibold flex-1"
                   disabled={isProvisioningDb}
                 />
                 <button
                   type="submit"
                   disabled={isProvisioningDb}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white font-sans font-medium text-sm py-2.5 px-6 rounded-xl transition-all shadow flex items-center justify-center gap-2 cursor-pointer"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isProvisioningDb ? (
                     <>
@@ -445,45 +633,45 @@ export default function Dashboard() {
               </form>
             </div>
 
-            {/* Existing Database tables list */}
-            <div className="bg-brand-card border border-brand-border rounded-2xl overflow-hidden">
-              <div className="glass-header px-6 py-4 border-b border-brand-border">
-                <h3 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">Active Workspace Databases</h3>
+            {/* Active Databases List */}
+            <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl overflow-hidden shadow-xl shadow-sky-950/10">
+              <div className="px-6 py-4 border-b border-slate-200/80 bg-white/40">
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Active Workspace Databases</h3>
               </div>
               
-              <div className="divide-y divide-zinc-900">
+              <div className="divide-y divide-slate-200/80">
                 {databases.map((db) => (
                   <div key={db.id} className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="w-9 h-9 bg-zinc-950 rounded-lg flex items-center justify-center text-teal-400 border border-zinc-900">
-                          <Database className="w-4.5 h-4.5" />
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 border border-blue-200 rounded-xl flex items-center justify-center text-blue-600 shadow-2xs">
+                          <Database className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="block text-sm font-bold text-white">{db.name}</span>
-                          <span className="block text-[10px] font-mono text-gray-500">Region: sea-01 Edge Node</span>
+                          <span className="block text-sm font-extrabold text-slate-900">{db.name}</span>
+                          <span className="block text-[11px] font-semibold text-slate-600">Region: sea-01 Edge Node</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="bg-teal-950/40 border border-teal-900/60 text-teal-300 text-xs font-mono px-3 py-1 rounded-full">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold px-3 py-1 rounded-full">
                           {db.size} used
                         </span>
-                        <span className="bg-green-950/40 border border-green-900/60 text-green-300 text-xs font-mono px-3 py-1 rounded-full flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Active
+                        <span className="bg-emerald-100/90 border border-emerald-200 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Active
                         </span>
                       </div>
                     </div>
 
-                    {/* DB String connection bar */}
-                    <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 flex items-center justify-between gap-4">
-                      <code className="text-xs text-gray-300 font-mono truncate select-all">{db.url}</code>
+                    {/* Connection URI Box */}
+                    <div className="bg-white/80 p-3 rounded-xl border border-white/90 flex items-center justify-between gap-4 shadow-2xs">
+                      <code className="text-xs text-slate-800 font-mono truncate select-all">{db.url}</code>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(db.url);
                           alert('Database URL copied to clipboard!');
                         }}
-                        className="text-xs text-blue-400 hover:underline font-sans cursor-pointer flex-shrink-0"
+                        className="text-xs text-blue-600 hover:text-blue-700 font-bold hover:underline cursor-pointer flex-shrink-0"
                       >
                         Copy URI
                       </button>
@@ -498,17 +686,17 @@ export default function Dashboard() {
 
         {/* Tab 4: ENVIRONMENT VARIABLES */}
         {activeTab === 'env-vars' && (
-          <div className="space-y-8">
+          <div className="space-y-6 motion-safe:animate-fade-in-up">
             
-            {/* Create form panel */}
-            <div className="bg-brand-card border border-brand-border rounded-2xl p-6 sm:p-8 space-y-6">
+            {/* Create Env Var Form */}
+            <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl shadow-sky-950/10">
               <div className="space-y-1.5">
-                <span className="text-xs font-mono font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1">
+                <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
                   <Key className="w-4 h-4" /> Secure Environment Storage
                 </span>
-                <h2 className="text-lg font-sans font-bold text-white font-sans">Configure Global Keys</h2>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  Inject parameters and secrets dynamically into your compiler workspace builds securely. Keys are encrypted at-rest using AES-256.
+                <h2 className="text-xl font-extrabold text-slate-900">Configure Environment Keys</h2>
+                <p className="text-slate-700 text-xs leading-relaxed font-semibold">
+                  Inject parameters and secrets dynamically into your build runs securely. Keys are encrypted at-rest using AES-256.
                 </p>
               </div>
 
@@ -517,7 +705,7 @@ export default function Dashboard() {
                   <select
                     value={newEnvProject}
                     onChange={(e) => setNewEnvProject(e.target.value)}
-                    className="bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm text-gray-300 focus:outline-none w-full cursor-pointer font-sans"
+                    className="bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-semibold focus:outline-none w-full cursor-pointer shadow-2xs"
                   >
                     {projects.map(p => (
                       <option key={p.id} value={p.name}>{p.name}</option>
@@ -532,7 +720,7 @@ export default function Dashboard() {
                     placeholder="API_KEY_NAME"
                     value={newEnvKey}
                     onChange={(e) => setNewEnvKey(e.target.value)}
-                    className="bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none w-full font-mono uppercase"
+                    className="bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none w-full font-mono uppercase shadow-2xs"
                   />
                 </div>
 
@@ -543,14 +731,14 @@ export default function Dashboard() {
                     placeholder="secret_parameter_value"
                     value={newEnvValue}
                     onChange={(e) => setNewEnvValue(e.target.value)}
-                    className="bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none w-full font-mono"
+                    className="bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none w-full font-mono shadow-2xs"
                   />
                 </div>
 
                 <div className="md:col-span-2">
                   <button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-sans font-medium text-sm py-2.5 rounded-xl transition-all shadow w-full flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-md shadow-blue-600/30 w-full flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" /> Add Key
                   </button>
@@ -558,40 +746,38 @@ export default function Dashboard() {
               </form>
             </div>
 
-            {/* Env list cards */}
-            <div className="bg-brand-card border border-brand-border rounded-2xl overflow-hidden">
-              <div className="glass-header px-6 py-4 border-b border-brand-border">
-                <h3 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">Configured Credentials Matrix</h3>
+            {/* Configured Keys Matrix */}
+            <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl overflow-hidden shadow-xl shadow-sky-950/10">
+              <div className="px-6 py-4 border-b border-slate-200/80 bg-white/40">
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Configured Credentials Matrix</h3>
               </div>
 
-              <div className="divide-y divide-zinc-900">
+              <div className="divide-y divide-slate-200/80">
                 {envVars.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500 text-xs font-mono">
+                  <div className="text-center py-12 text-slate-500 text-xs font-bold">
                     No credentials injected yet.
                   </div>
                 ) : (
                   envVars.map((ev) => (
-                    <div key={ev.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-zinc-950/10">
-                      
+                    <div key={ev.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/40 transition-colors">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <code className="text-sm font-bold text-purple-400 font-mono">{ev.key}</code>
-                          <span className="text-[10px] bg-zinc-900 text-gray-400 border border-zinc-800 px-2 py-0.5 rounded font-sans">
+                          <code className="text-xs font-extrabold text-blue-700 font-mono">{ev.key}</code>
+                          <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-bold">
                             {ev.project}
                           </span>
                         </div>
-                        <code className="text-xs text-gray-500 font-mono block select-all">{ev.value}</code>
+                        <code className="text-xs text-slate-600 font-mono block select-all">{ev.value}</code>
                       </div>
 
                       <button
                         type="button"
                         onClick={() => handleDeleteEnvVar(ev.id)}
-                        className="p-2 text-gray-500 hover:text-red-400 rounded-lg border border-transparent hover:border-zinc-800 bg-zinc-950/40 transition-all flex items-center justify-center cursor-pointer"
+                        className="p-2 text-slate-400 hover:text-red-600 rounded-xl border border-white/90 bg-white/60 hover:bg-white transition-all shadow-2xs flex items-center justify-center cursor-pointer"
                         aria-label="Delete key"
                       >
                         <Trash className="w-4 h-4" />
                       </button>
-
                     </div>
                   ))
                 )}
@@ -601,22 +787,22 @@ export default function Dashboard() {
           </div>
         )}
 
-      </main>
+      </div>
 
       {/* CONNECT REPOSITORY MODAL */}
       {isConnectModalOpen && (
-        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center px-4 backdrop-blur-sm">
-          <div className="bg-brand-card border border-brand-border rounded-2xl w-full max-w-xl shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center px-4">
+          <div className="backdrop-blur-2xl bg-white/90 border border-white rounded-3xl w-full max-w-xl shadow-2xl relative overflow-hidden transition-all motion-safe:animate-fade-in-up">
             
-            {/* Modal header */}
-            <div className="glass-header px-6 py-4 border-b border-brand-border flex items-center justify-between">
-              <h3 className="font-sans font-bold text-base text-white">Connect GitHub Repository</h3>
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
+              <h3 className="font-extrabold text-base text-slate-900">Connect GitHub Repository</h3>
               <button
                 type="button"
                 onClick={() => {
                   if (!isBuildingNewProject) setIsConnectModalOpen(false);
                 }}
-                className="text-gray-400 hover:text-white font-semibold cursor-pointer text-sm"
+                className="text-slate-400 hover:text-slate-700 font-bold cursor-pointer text-xs"
                 disabled={isBuildingNewProject}
               >
                 Close
@@ -627,12 +813,12 @@ export default function Dashboard() {
             <div className="p-6">
               {!isBuildingNewProject ? (
                 <div className="space-y-5">
-                  <p className="text-gray-400 text-sm leading-relaxed font-sans">
+                  <p className="text-slate-700 text-xs leading-relaxed font-semibold">
                     Import and launch configurations from your existing personal accounts seamlessly.
                   </p>
 
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                       <Search className="w-4 h-4" />
                     </div>
                     <input
@@ -640,24 +826,24 @@ export default function Dashboard() {
                       placeholder="Search available repositories..."
                       value={searchRepoQuery}
                       onChange={(e) => setSearchRepoQuery(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-900 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-mono"
+                      className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all font-semibold shadow-2xs focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
 
                   {/* List repositories */}
-                  <div className="divide-y divide-zinc-900 border border-zinc-900 rounded-xl max-h-60 overflow-y-auto">
+                  <div className="divide-y divide-slate-200/80 border border-slate-200 rounded-2xl max-h-60 overflow-y-auto bg-white/50">
                     {repos
                       .filter(r => r.name.toLowerCase().includes(searchRepoQuery.toLowerCase()))
                       .map((repo) => (
-                        <div key={repo.id} className="p-4 flex items-center justify-between hover:bg-zinc-950/40 transition-colors">
-                          <div className="space-y-1">
-                            <span className="text-sm font-semibold text-white font-sans block">{repo.name}</span>
-                            <span className="text-[11px] font-mono text-gray-500">Branch: {repo.branch} • Language: {repo.language}</span>
+                        <div key={repo.id} className="p-4 flex items-center justify-between hover:bg-white transition-colors">
+                          <div className="space-y-0.5">
+                            <span className="text-xs font-bold text-slate-900 block">{repo.name}</span>
+                            <span className="text-[10px] font-semibold text-slate-500">Branch: {repo.branch} • Language: {repo.language}</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleConnectRepo(repo)}
-                            className="bg-zinc-900 hover:bg-blue-600 border border-zinc-800 hover:border-blue-500 text-xs text-gray-300 hover:text-white px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-sans"
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer"
                           >
                             Deploy
                           </button>
@@ -668,26 +854,26 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-5">
                   <div className="flex justify-between items-center text-xs font-mono">
-                    <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
+                    <span className="flex items-center gap-1.5 text-blue-600 font-bold">
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" /> COMPILING: {buildingProgress}%
                     </span>
-                    <span className="text-gray-500">Node: Sandbox-A7</span>
+                    <span className="text-slate-500 font-semibold">Node: Sandbox-A7</span>
                   </div>
 
-                  {/* Loading slider bar */}
-                  <div className="w-full bg-zinc-950 h-1 rounded-full overflow-hidden">
+                  {/* Loading Slider Bar */}
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-500"
                       style={{ width: `${buildingProgress}%` }}
                     ></div>
                   </div>
 
-                  {/* Terminal log window */}
-                  <div className="bg-zinc-950 rounded-xl p-4 border border-zinc-900 h-44 overflow-y-auto font-mono text-[11px] text-gray-400 space-y-1.5">
+                  {/* Terminal Log Window */}
+                  <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 h-44 overflow-y-auto font-mono text-[11px] text-slate-300 space-y-1.5 shadow-inner">
                     {newProjectLogs.map((log, lIdx) => (
                       <div
                         key={lIdx}
-                        className={log.includes('SUCCESS') ? 'text-green-400 font-bold' : log.includes('Run command') ? 'text-blue-300' : 'text-gray-400'}
+                        className={log.includes('SUCCESS') ? 'text-emerald-400 font-bold' : log.includes('Run command') ? 'text-blue-300' : 'text-slate-400'}
                       >
                         {log}
                       </div>
@@ -700,6 +886,32 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Embedded Animation Styles */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
 
     </div>
   );

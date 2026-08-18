@@ -36,3 +36,13 @@ export const getCurrentUser = async () => {
 export const logout = () => {
   localStorage.removeItem("token");
 };
+
+export const verifyEmail = async (token: string) => {
+  const response = await api.get("/auth/verify-email", {
+    params: {
+      token,
+    },
+  });
+
+  return response.data;
+};

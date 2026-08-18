@@ -12,6 +12,7 @@ import Faq from "./components/landing/Faq";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import VerifyEmail from "./pages/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -72,6 +73,14 @@ export default function App() {
             </div>
           }
         />
+        <Route
+  path="/verify-email"
+  element={
+    <div className="flex flex-col flex-grow">
+      <VerifyEmail />
+    </div>
+  }
+/>
 
         <Route
           path={ROUTES.DASHBOARD}
