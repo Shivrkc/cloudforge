@@ -1,0 +1,86 @@
+import api from "./api";
+
+export interface BackendProject {
+  id: string;
+  name: string;
+  description?: string | null;
+  repositoryName?: string | null;
+  repositoryUrl?: string | null;
+  branch: string;
+  status: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProjectPayload {
+  name: string;
+  repositoryName?: string;
+  repositoryUrl?: string;
+  branch?: string;
+  description?: string;
+  status?: string;
+}
+
+export interface UpdateProjectPayload {
+  name?: string;
+  repositoryName?: string;
+  repositoryUrl?: string;
+  branch?: string;
+  description?: string;
+  status?: string;
+}
+
+interface ProjectsResponse {
+  success: boolean;
+  projects: BackendProject[];
+}
+
+interface ProjectResponse {
+  success: boolean;
+  project: BackendProject;
+}
+
+interface DeleteProjectResponse {
+  success: boolean;
+  message: string;
+}
+
+export const getProjects = async (): Promise<BackendProject[]> => {
+  const response = await api.get<ProjectsResponse>("/projects");
+  return response.data.projects;
+};
+
+export const createProject = async (
+  data: CreateProjectPayload
+): Promise<BackendProject> => {
+  const response = await api.post<ProjectResponse>("/projects", data);
+  return response.data.project;
+};
+
+export const getProjectById = async (
+  id: string
+): Promise<BackendProject> => {
+  const response = await api.get<ProjectResponse>(`/projects/${id}`);
+  return response.data.project;
+};
+
+export const updateProject = async (
+  id: string,
+  data: UpdateProjectPayload
+): Promise<BackendProject> => {
+  const response = await api.patch<ProjectResponse>(
+    `/projects/${id}`,
+    data
+  );
+  return response.data.project;
+};
+
+export const deleteProject = async (
+  id: string
+): Promise<DeleteProjectResponse> => {
+  const response = await api.delete<DeleteProjectResponse>(
+    `/projects/${id}`
+  );
+  return response.data;
+};

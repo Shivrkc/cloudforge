@@ -2,16 +2,50 @@ import { useState, useEffect, FormEvent, useRef } from 'react';
 import { 
   Plus, Search, Github, GitBranch, CheckCircle2, 
   AlertTriangle, RefreshCw, Database, Key, Trash, 
-  ExternalLink, ShieldCheck, Activity, Layers, Server, 
-  Clock, TrendingUp, Cpu
+  ExternalLink, Activity, Layers, Server, 
+  Clock, TrendingUp
 } from 'lucide-react';
 import { Project, Deployment, Repository } from '../types';
-import { MOCK_PROJECTS, MOCK_DEPLOYMENTS, MOCK_REPOSITORIES, SIMULATED_BUILD_STEPS } from '../data/mockData';
+import { MOCK_DEPLOYMENTS, MOCK_REPOSITORIES, SIMULATED_BUILD_STEPS } from '../data/mockData';
+import { getProjects, createProject, BackendProject } from '../services/project.service';
+
+const formatRelativeTime = (dateString: string): string => {
+  if (!dateString) return 'Just now';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+};
+
+const mapBackendProjectToProject = (bp: BackendProject): Project => {
+  const repoName = bp.repositoryName ?? '';
+  const status: 'ready' | 'building' | 'failed' = 
+    bp.status === 'building' || bp.status === 'failed' ? bp.status : 'ready';
+
+  return {
+    id: bp.id,
+    name: bp.name,
+    repo: repoName,
+    owner: repoName.includes('/') ? repoName.split('/')[0] : 'dev-master',
+    status,
+    url: bp.repositoryUrl ?? '',
+    updatedAt: formatRelativeTime(bp.updatedAt),
+    deploymentsCount: 0,
+  };
+};
 
 export default function Dashboard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState<boolean>(true);
+  const [projectError, setProjectError] = useState<string | null>(null);
+
   const [deployments, setDeployments] = useState<Deployment[]>(MOCK_DEPLOYMENTS);
   const [repos] = useState<Repository[]>(MOCK_REPOSITORIES);
   const [activeTab, setActiveTab] = useState<'overview' | 'deployments' | 'databases' | 'env-vars'>('overview');
@@ -38,10 +72,41 @@ export default function Dashboard() {
   ]);
   const [newEnvKey, setNewEnvKey] = useState('');
   const [newEnvValue, setNewEnvValue] = useState('');
-  const [newEnvProject, setNewEnvProject] = useState(MOCK_PROJECTS[0]?.name || 'nexus-analytics-dashboard');
+  const [newEnvProject, setNewEnvProject] = useState('');
 
   // Search filter
   const [searchProjectQuery, setSearchProjectQuery] = useState('');
+
+  // Fetch Projects from Backend API on mount
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingProjects(true);
+    setProjectError(null);
+
+    getProjects()
+      .then((data) => {
+        if (!isMounted) return;
+        const mapped = data.map(mapBackendProjectToProject);
+        setProjects(mapped);
+        if (mapped.length > 0) {
+          setNewEnvProject(mapped[0].name);
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        const msg = err.response?.data?.message || err.message || 'Failed to fetch projects from server';
+        setProjectError(msg);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoadingProjects(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Subtle High-Altitude Sky Background Canvas Animation
   useEffect(() => {
@@ -83,7 +148,6 @@ export default function Dashboard() {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Deep Atmospheric Sky Blue Background Gradient
       const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
       skyGrad.addColorStop(0, '#0284c7');
       skyGrad.addColorStop(0.32, '#38bdf8');
@@ -93,7 +157,6 @@ export default function Dashboard() {
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // Ambient Sunlight Radial Lighting
       const sunGlow = ctx.createRadialGradient(
         width * 0.5,
         height * 0.15,
@@ -109,7 +172,6 @@ export default function Dashboard() {
       ctx.fillStyle = sunGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Render Soft Layered Drifting Clouds
       clouds.sort((a, b) => a.z - b.z);
 
       clouds.forEach((cloud) => {
@@ -154,7 +216,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  // Handle mock repo connection & building simulation
   const handleConnectRepo = (repo: Repository) => {
     setActiveBuildingRepo(repo);
     setIsBuildingNewProject(true);
@@ -177,49 +238,57 @@ export default function Dashboard() {
       } else {
         clearInterval(interval);
         
-        const newProjId = `p-${Date.now()}`;
         const newProjName = activeBuildingRepo.name;
-        
-        const newProjectObj: Project = {
-          id: newProjId,
+        const repoFullName = `${activeBuildingRepo.owner}/${activeBuildingRepo.name}`;
+        const repoUrl = `https://${newProjName}.cloudforge.app`;
+
+        createProject({
           name: newProjName,
-          repo: `${activeBuildingRepo.owner}/${activeBuildingRepo.name}`,
-          owner: activeBuildingRepo.owner,
-          status: 'ready',
-          url: `https://${newProjName}.cloudforge.app`,
-          updatedAt: 'Just now',
-          deploymentsCount: 1
-        };
+          repositoryName: repoFullName,
+          repositoryUrl: repoUrl,
+          branch: activeBuildingRepo.branch || 'main',
+          status: 'ready'
+        })
+          .then((createdBackendProject) => {
+            const newProjectObj = mapBackendProjectToProject(createdBackendProject);
 
-        const newDeploymentObj: Deployment = {
-          id: `d-${Date.now()}`,
-          projectName: newProjName,
-          status: 'ready',
-          branch: activeBuildingRepo.branch,
-          commitMsg: 'initial cloudforge import deploy',
-          commitHash: 'cf7b92a',
-          deployedAt: 'Just now',
-          url: `https://${newProjName}-cf7b92a.cloudforge.app`,
-          environment: 'production'
-        };
+            const newDeploymentObj: Deployment = {
+              id: `d-${Date.now()}`,
+              projectName: newProjName,
+              status: 'ready',
+              branch: activeBuildingRepo.branch,
+              commitMsg: 'initial cloudforge import deploy',
+              commitHash: 'cf7b92a',
+              deployedAt: 'Just now',
+              url: `https://${newProjName}-cf7b92a.cloudforge.app`,
+              environment: 'production'
+            };
 
-        setProjects(prev => [newProjectObj, ...prev]);
-        setDeployments(prev => [newDeploymentObj, ...prev]);
-        
-        setTimeout(() => {
-          setIsBuildingNewProject(false);
-          setIsConnectModalOpen(false);
-          setActiveBuildingRepo(null);
-          setNewProjectLogs([]);
-          setBuildingProgress(0);
-        }, 1500);
+            setProjects(prev => [newProjectObj, ...prev]);
+            setDeployments(prev => [newDeploymentObj, ...prev]);
+            if (!newEnvProject) {
+              setNewEnvProject(newProjectObj.name);
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to persist project record:", err);
+            setNewProjectLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ERROR: Server creation failed.`]);
+          })
+          .finally(() => {
+            setTimeout(() => {
+              setIsBuildingNewProject(false);
+              setIsConnectModalOpen(false);
+              setActiveBuildingRepo(null);
+              setNewProjectLogs([]);
+              setBuildingProgress(0);
+            }, 1500);
+          });
       }
     }, 700);
 
     return () => clearInterval(interval);
-  }, [isBuildingNewProject, activeBuildingRepo]);
+  }, [isBuildingNewProject, activeBuildingRepo, newEnvProject]);
 
-  // Handle provisioning DB simulation
   const handleProvisionDb = (e: FormEvent) => {
     e.preventDefault();
     if (!newDbName.trim()) return;
@@ -241,7 +310,6 @@ export default function Dashboard() {
     }, 3000);
   };
 
-  // Handle adding Environment Variable
   const handleAddEnvVar = (e: FormEvent) => {
     e.preventDefault();
     if (!newEnvKey.trim() || !newEnvValue.trim()) return;
@@ -262,10 +330,9 @@ export default function Dashboard() {
     setEnvVars(prev => prev.filter(ev => ev.id !== id));
   };
 
-  // Filter projects list
   const filteredProjects = projects.filter(p => 
     p.name.toLowerCase().includes(searchProjectQuery.toLowerCase()) ||
-    p.repo.toLowerCase().includes(searchProjectQuery.toLowerCase())
+    (p.repo && p.repo.toLowerCase().includes(searchProjectQuery.toLowerCase()))
   );
 
   const totalDeployments = deployments.length;
@@ -274,20 +341,15 @@ export default function Dashboard() {
   return (
     <div id="dashboard-workspace" className="min-h-screen flex flex-col relative overflow-x-hidden font-sans selection:bg-sky-200">
       
-      {/* Background Animated Sky Canvas */}
       <canvas
         ref={canvasRef}
         className="fixed inset-0 w-full h-full pointer-events-none z-0"
       />
 
-      {/* Main Container - Padded below Top Navigation Header */}
       <div className="pt-24 sm:pt-28 pb-16 flex-1 flex flex-col relative z-20 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         
-        {/* Workspace Sub-Header Glass Panel */}
         <section className="backdrop-blur-2xl bg-white/60 hover:bg-white/65 border border-white/90 rounded-3xl p-6 shadow-xl shadow-sky-950/10 transition-all duration-300">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            
-            {/* Workspace Identity */}
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold flex items-center justify-center text-lg shadow-md shadow-blue-600/30">
                 DM
@@ -303,7 +365,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Main Workspace Actions */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -314,10 +375,8 @@ export default function Dashboard() {
                 Connect Repository
               </button>
             </div>
-
           </div>
 
-          {/* SaaS Navigation Tabs */}
           <div className="mt-6 pt-4 border-t border-slate-200/80 flex items-center space-x-2 sm:space-x-4 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab('overview')}
@@ -366,11 +425,8 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Tab Content Areas */}
         {activeTab === 'overview' && (
           <div className="space-y-6 motion-safe:animate-fade-in-up">
-            
-            {/* Analytics Statistics Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="backdrop-blur-xl bg-white/60 border border-white/90 rounded-2xl p-4 shadow-sm space-y-1">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
@@ -401,7 +457,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Premium Command Search Bar */}
             <div className="relative max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Search className="w-4 h-4" />
@@ -415,8 +470,18 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Projects Grid */}
-            {filteredProjects.length === 0 ? (
+            {loadingProjects ? (
+              <div className="text-center py-16 backdrop-blur-xl bg-white/50 border border-slate-200/80 rounded-3xl p-8 space-y-3">
+                <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
+                <p className="text-sm font-bold text-slate-800">Loading projects from server...</p>
+              </div>
+            ) : projectError ? (
+              <div className="text-center py-16 backdrop-blur-xl bg-white/50 border border-red-200/80 rounded-3xl p-8 space-y-3">
+                <AlertTriangle className="w-10 h-10 text-red-500 mx-auto" />
+                <p className="text-sm font-bold text-slate-800">Unable to load projects</p>
+                <p className="text-xs text-red-600 font-medium">{projectError}</p>
+              </div>
+            ) : filteredProjects.length === 0 ? (
               <div className="text-center py-20 backdrop-blur-xl bg-white/50 border border-dashed border-slate-300 rounded-3xl p-8 space-y-3">
                 <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
                 <p className="text-sm font-bold text-slate-800">No projects match your search filter.</p>
@@ -477,14 +542,13 @@ export default function Dashboard() {
 
                     <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 text-[11px] text-slate-600 font-semibold">
                       <span>Updated {project.updatedAt}</span>
-                      <span className="text-slate-800 font-bold">{project.deploymentsCount} Deploys</span>
+                      <span className="text-slate-800 font-bold">{project.deploymentsCount ?? 0} Deploys</span>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Recent Activity Table Container */}
             <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-2xl overflow-hidden shadow-lg shadow-sky-950/5 space-y-3 p-6">
               <div className="flex items-center justify-between border-b border-slate-200/80 pb-4">
                 <div>
@@ -526,7 +590,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab 2: DEPLOYMENTS */}
         {activeTab === 'deployments' && (
           <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl overflow-hidden shadow-xl shadow-sky-950/10 motion-safe:animate-fade-in-up">
             <div className="px-6 py-5 border-b border-slate-200/80 bg-white/40 flex items-center justify-between">
@@ -539,7 +602,6 @@ export default function Dashboard() {
             <div className="divide-y divide-slate-200/80">
               {deployments.map((dep) => (
                 <div key={dep.id} className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-white/40 transition-colors">
-                  
                   <div className="space-y-1.5 max-w-xl">
                     <div className="flex items-center gap-2.5">
                       <span className="text-sm font-extrabold text-slate-900">{dep.projectName}</span>
@@ -582,18 +644,14 @@ export default function Dashboard() {
                       View Logs
                     </button>
                   </div>
-
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Tab 3: DATABASES */}
         {activeTab === 'databases' && (
           <div className="space-y-6 motion-safe:animate-fade-in-up">
-            
-            {/* Create DB Panel Form */}
             <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl shadow-sky-950/10">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1">
@@ -633,7 +691,6 @@ export default function Dashboard() {
               </form>
             </div>
 
-            {/* Active Databases List */}
             <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl overflow-hidden shadow-xl shadow-sky-950/10">
               <div className="px-6 py-4 border-b border-slate-200/80 bg-white/40">
                 <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Active Workspace Databases</h3>
@@ -663,7 +720,6 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Connection URI Box */}
                     <div className="bg-white/80 p-3 rounded-xl border border-white/90 flex items-center justify-between gap-4 shadow-2xs">
                       <code className="text-xs text-slate-800 font-mono truncate select-all">{db.url}</code>
                       <button
@@ -680,15 +736,11 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-
           </div>
         )}
 
-        {/* Tab 4: ENVIRONMENT VARIABLES */}
         {activeTab === 'env-vars' && (
           <div className="space-y-6 motion-safe:animate-fade-in-up">
-            
-            {/* Create Env Var Form */}
             <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl shadow-sky-950/10">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
@@ -707,9 +759,13 @@ export default function Dashboard() {
                     onChange={(e) => setNewEnvProject(e.target.value)}
                     className="bg-white/75 focus:bg-white border border-white/90 focus:border-blue-500 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-semibold focus:outline-none w-full cursor-pointer shadow-2xs"
                   >
-                    {projects.map(p => (
-                      <option key={p.id} value={p.name}>{p.name}</option>
-                    ))}
+                    {projects.length === 0 ? (
+                      <option value="">No projects available</option>
+                    ) : (
+                      projects.map(p => (
+                        <option key={p.id} value={p.name}>{p.name}</option>
+                      ))
+                    )}
                   </select>
                 </div>
                 
@@ -746,7 +802,6 @@ export default function Dashboard() {
               </form>
             </div>
 
-            {/* Configured Keys Matrix */}
             <div className="backdrop-blur-2xl bg-white/60 border border-white/90 rounded-3xl overflow-hidden shadow-xl shadow-sky-950/10">
               <div className="px-6 py-4 border-b border-slate-200/80 bg-white/40">
                 <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Configured Credentials Matrix</h3>
@@ -783,18 +838,14 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-
           </div>
         )}
 
       </div>
 
-      {/* CONNECT REPOSITORY MODAL */}
       {isConnectModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center px-4">
           <div className="backdrop-blur-2xl bg-white/90 border border-white rounded-3xl w-full max-w-xl shadow-2xl relative overflow-hidden transition-all motion-safe:animate-fade-in-up">
-            
-            {/* Modal Header */}
             <div className="px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
               <h3 className="font-extrabold text-base text-slate-900">Connect GitHub Repository</h3>
               <button
@@ -809,7 +860,6 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6">
               {!isBuildingNewProject ? (
                 <div className="space-y-5">
@@ -830,7 +880,6 @@ export default function Dashboard() {
                     />
                   </div>
 
-                  {/* List repositories */}
                   <div className="divide-y divide-slate-200/80 border border-slate-200 rounded-2xl max-h-60 overflow-y-auto bg-white/50">
                     {repos
                       .filter(r => r.name.toLowerCase().includes(searchRepoQuery.toLowerCase()))
@@ -860,7 +909,6 @@ export default function Dashboard() {
                     <span className="text-slate-500 font-semibold">Node: Sandbox-A7</span>
                   </div>
 
-                  {/* Loading Slider Bar */}
                   <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-500"
@@ -868,7 +916,6 @@ export default function Dashboard() {
                     ></div>
                   </div>
 
-                  {/* Terminal Log Window */}
                   <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 h-44 overflow-y-auto font-mono text-[11px] text-slate-300 space-y-1.5 shadow-inner">
                     {newProjectLogs.map((log, lIdx) => (
                       <div
@@ -882,13 +929,11 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       )}
 
-      {/* Embedded Animation Styles */}
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -911,8 +956,7 @@ export default function Dashboard() {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
-      `}</style>
-
+      ` }} />
     </div>
   );
 }

@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id                  String                    @id @default(cuid())
-  name                String
-  email               String                    @unique
-  password            String?
-  avatar              String?
-  provider            String                    @default("credentials")
-  emailVerified       Boolean                   @default(false)
-  verificationTokens  EmailVerificationToken[]
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  id                 String                   @id @default(cuid())
+  name               String
+  email              String                   @unique
+  password           String?
+  avatar             String?
+  provider           String                   @default("credentials")
+  emailVerified      Boolean                  @default(false)
+  verificationTokens EmailVerificationToken[]
+  projects           Project[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 }
 
 model EmailVerificationToken {
@@ -26,6 +27,23 @@ model EmailVerificationToken {
   userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  repositoryName String?
+  repositoryUrl  String?
+  branch         String?  @default("main")
+  status         String   @default("idle")
+  userId         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
