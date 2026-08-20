@@ -1,394 +1,332 @@
-import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
 import { 
+  Cloud, 
+  Terminal, 
+  ShieldCheck, 
+  Zap, 
   ArrowRight, 
-  Check, 
-  Rocket, 
-  RefreshCw, 
-  Plus, 
-  Home, 
-  FolderGit2, 
-  Layers, 
-  FileText, 
-  Bot, 
-  Settings, 
-  ChevronRight, 
-  TrendingUp, 
-  TrendingDown 
+  CheckCircle2, 
+  Server, 
+  GitBranch,
+  Cpu
 } from 'lucide-react';
-import { ROUTES } from '../../constants/routes';
-
-function GithubIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" {...props}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-    </svg>
-  );
-}
-
-const STATS = [
-  { label: 'Projects', value: '6', change: '+ 2 this month', isPositive: true },
-  { label: 'Deployments', value: '14', change: '+ 5 this month', isPositive: true },
-  { label: 'Successful', value: '12', change: '80%', isPositive: true, showArrow: true },
-  { label: 'Failed', value: '2', change: '16%', isPositive: false, showArrow: true },
-];
-
-const RECENT_DEPLOYMENTS = [
-  { id: '1', name: 'my-portfolio', branch: 'main', time: '2m ago', status: 'Success', icon: 'P' },
-  { id: '2', name: 'api-server', branch: 'dev', time: '15m ago', status: 'Success', icon: 'R' },
-  { id: '3', name: 'blog-site', branch: 'main', time: '32m ago', status: 'Failed', icon: 'R' },
-  { id: '4', name: 'landing-page', branch: 'main', time: '1h ago', status: 'Success', icon: 'R' },
-  { id: '5', name: 'dashboard', branch: 'main', time: '2h ago', status: 'Success', icon: 'R' },
-];
 
 export default function Hero() {
-  const navigate = useNavigate();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Realistic forward-travelling cloud ocean animation via Canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Cloud puff data generator for multi-layered forward travel
+    const horizonY = height * 0.42;
+    const cloudCount = 70;
+    
+    interface CloudPuff {
+      xRatio: number; // -1 to 1 relative to center
+      z: number;      // depth: 0 (far) to 1 (near)
+      radius: number;
+      opacity: number;
+      seed: number;
+    }
+
+    const clouds: CloudPuff[] = Array.from({ length: cloudCount }, () => ({
+      xRatio: (Math.random() - 0.5) * 2.5,
+      z: Math.random(),
+      radius: 80 + Math.random() * 120,
+      opacity: 0.35 + Math.random() * 0.45,
+      seed: Math.random() * 100,
+    }));
+
+    let speed = 0.0008; // Continuous forward camera velocity
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // --- 1. Realistic Sky Background ---
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY + 100);
+      skyGrad.addColorStop(0, '#1e40af'); // Deep rich blue
+      skyGrad.addColorStop(0.4, '#3b82f6'); // Azure blue
+      skyGrad.addColorStop(0.85, '#93c5fd'); // Soft atmospheric blue-white
+      skyGrad.addColorStop(1, '#e0f2fe'); // Light horizon mist
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // --- 2. Sunlight Glow at Horizon (Centered behind hero content) ---
+      const sunX = width * 0.5;
+      const sunY = horizonY - 15;
+      const sunGlow = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 380);
+      sunGlow.addColorStop(0, 'rgba(255, 253, 235, 0.95)');
+      sunGlow.addColorStop(0.2, 'rgba(254, 243, 199, 0.6)');
+      sunGlow.addColorStop(0.55, 'rgba(191, 219, 254, 0.35)');
+      sunGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = sunGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // --- 3. Render Continuous Cloud Ocean with Depth/Parallax ---
+      // Sort clouds by depth (far to near)
+      clouds.sort((a, b) => a.z - b.z);
+
+      clouds.forEach((cloud) => {
+        // Advance depth forward
+        cloud.z += speed;
+        if (cloud.z > 1) {
+          cloud.z -= 1;
+          cloud.xRatio = (Math.random() - 0.5) * 2.5;
+        }
+
+        // Perspective scaling
+        const perspective = Math.pow(cloud.z, 2.2); // Exponential depth feel
+        const screenY = horizonY + perspective * (height - horizonY);
+        const screenX = width / 2 + cloud.xRatio * width * (0.3 + perspective * 0.8);
+        const currentRadius = cloud.radius * (0.25 + perspective * 1.8);
+        const currentOpacity = Math.min(cloud.opacity, cloud.z * 1.2);
+
+        // Volumetric Cloud Puff Painting
+        const cloudGlow = ctx.createRadialGradient(
+          screenX - currentRadius * 0.2,
+          screenY - currentRadius * 0.3,
+          currentRadius * 0.1,
+          screenX,
+          screenY,
+          currentRadius
+        );
+
+        // Warm light top, cool soft blue shadow bottom
+        cloudGlow.addColorStop(0, `rgba(255, 255, 255, ${currentOpacity})`);
+        cloudGlow.addColorStop(0.5, `rgba(241, 245, 249, ${currentOpacity * 0.85})`);
+        cloudGlow.addColorStop(0.85, `rgba(203, 213, 225, ${currentOpacity * 0.45})`);
+        cloudGlow.addColorStop(1, 'rgba(203, 213, 225, 0)');
+
+        ctx.beginPath();
+        ctx.fillStyle = cloudGlow;
+        ctx.arc(screenX, screenY, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // --- 4. Haze Overlay at Horizon Line ---
+      const hazeGrad = ctx.createLinearGradient(0, horizonY - 40, 0, horizonY + 60);
+      hazeGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      hazeGrad.addColorStop(0.5, 'rgba(255, 247, 237, 0.45)');
+      hazeGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = hazeGrad;
+      ctx.fillRect(0, horizonY - 40, width, 100);
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   return (
-    <section id="hero" className="relative pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden bg-[#050507] text-white">
-      {/* Background Ambient Glows & Sparkles */}
-     
-
-      {/* Decorative background grid texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.08] pointer-events-none"
-        style={{
-          backgroundImage: `radial-gradient(#ffffff 1px, transparent 1px)`,
-          backgroundSize: '24px 24px'
-        }}
+    <section className="relative min-h-screen w-full overflow-hidden pt-28 pb-16 flex flex-col items-center justify-between selection:bg-sky-200">
+      {/* Dynamic Aerial Sky & Cloud Ocean Canvas */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none z-0"
       />
 
-      {/* Background Decorative Sparkle Graphics */}
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-6 items-center">
+      {/* Hero Outer Content Container */}
+      <div className="relative z-10 max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto flex flex-col items-center justify-between flex-grow">
+        
+        {/* Upper Main Section: Left Cards | Center Hero | Right Card */}
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-4 mb-12">
           
-          {/* Left Column: Hero Copy & Actions */}
-          <motion.div 
-            className="lg:col-span-5 space-y-7 text-left"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-950/80 border border-orange-500/30 text-xs font-medium text-orange-400 shadow-sm backdrop-blur-md">
-              <Rocket className="w-3.5 h-3.5 text-orange-500" />
-              <span>Deploy with Confidence</span>
-            </div>
-
-            {/* Headline */}
-            <div className="space-y-1">
-              <h1 className="text-5xl sm:text-6xl xl:text-7xl font-extrabold text-white tracking-tight leading-[1.05]">
-                HAVN
-              </h1>
-              <div className="relative inline-block text-5xl sm:text-6xl xl:text-7xl font-extrabold text-white tracking-tight leading-[1.05]">
-                <span>From </span>
-                <span className="text-orange-500">Cöde</span>
-                <span> to Cloud</span>
-                <span className="text-orange-500">.</span>
-                
-                {/* Underline Curved Swoosh */}
-                <svg className="absolute -bottom-2.5 left-0 w-full h-4 text-orange-500/90 pointer-events-none" viewBox="0 0 300 16" fill="none">
-                  <path d="M 2 10 C 80 2, 200 2, 298 12" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-                </svg>
+          {/* LEFT SIDE: 3 Floating Compact Glass Feature Cards */}
+          <div className="lg:col-span-3 flex flex-col gap-4 items-center lg:items-start order-2 lg:order-1">
+            
+            {/* Feature 1 */}
+            <div className="w-full max-w-xs backdrop-blur-md bg-white/30 border border-white/50 rounded-2xl p-4 shadow-lg shadow-sky-900/5 hover:bg-white/40 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-blue-600/10 text-blue-700">
+                  <Terminal className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-950/70">CLI & SDK</h4>
+                  <p className="text-sm font-medium text-slate-900">Instant Deployments</p>
+                </div>
               </div>
             </div>
 
-            {/* Description */}
-            <p className="text-zinc-400 text-sm sm:text-base max-w-md font-sans leading-relaxed">
-              Deploy applications with confidence. Understand every build. Manage everything from one <span className="text-orange-500 font-medium">calm</span> workspace.
+            {/* Feature 2 */}
+            <div className="w-full max-w-xs backdrop-blur-md bg-white/30 border border-white/50 rounded-2xl p-4 shadow-lg shadow-sky-900/5 hover:bg-white/40 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-sky-600/10 text-sky-700">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-950/70">Enterprise</h4>
+                  <p className="text-sm font-medium text-slate-900">Zero Trust Security</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="w-full max-w-xs backdrop-blur-md bg-white/30 border border-white/50 rounded-2xl p-4 shadow-lg shadow-sky-900/5 hover:bg-white/40 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-amber-600/10 text-amber-700">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-950/70">Edge Mesh</h4>
+                  <p className="text-sm font-medium text-slate-900">&lt;10ms Global Latency</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* CENTER: Core Hero Text & CTAs */}
+          <div className="lg:col-span-6 flex flex-col items-center text-center order-1 lg:order-2">
+            
+            {/* Pill Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md bg-white/40 border border-white/60 shadow-sm mb-6">
+              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="text-xs font-semibold text-blue-950 tracking-wide">
+                Next-Gen Cloud Infrastructure
+              </span>
+            </div>
+
+            {/* Central Headline */}
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.08] mb-6">
+              From Code <br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-sky-600 to-indigo-800">
+                to Cloud.
+              </span>
+            </h1>
+
+            {/* Sub-description */}
+            <p className="max-w-xl text-base sm:text-lg text-slate-700 font-normal leading-relaxed mb-8">
+              Deploy, scale, and manage automated cloud environments instantly. 
+              Designed for high-growth engineering teams built on speed and reliability.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-3.5 pt-1">
-              <button
-                onClick={() => navigate(ROUTES.SIGNUP)}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm px-6 py-3.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 active:scale-[0.98] cursor-pointer"
-              >
-                <span>Start Deploying</span>
-                <ArrowRight className="w-4 h-4" />
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+              <button className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-600/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 group">
+                Start Deploying Free
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
-
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-zinc-950 hover:bg-zinc-900 text-white border border-zinc-800 text-sm font-semibold px-5 py-3.5 rounded-xl flex items-center gap-2.5 transition-all active:scale-[0.98]"
-              >
-                <GithubIcon className="w-4 h-4 fill-current" />
-                <span>View on GitHub</span>
-              </a>
+              <button className="w-full sm:w-auto px-7 py-3.5 rounded-xl backdrop-blur-md bg-white/40 hover:bg-white/60 text-slate-900 font-medium border border-white/60 shadow-sm transition-all">
+                Book Infrastructure Demo
+              </button>
             </div>
 
-            {/* Feature Checkmarks */}
-            <div className="flex flex-wrap items-center gap-5 pt-3 text-xs font-medium text-zinc-300">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full border border-orange-500/60 flex items-center justify-center text-orange-500 bg-orange-500/10">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+          </div>
+
+          {/* RIGHT SIDE: 1 Floating Deployment Card */}
+          <div className="lg:col-span-3 flex justify-center lg:justify-end order-3">
+            <div className="w-full max-w-xs backdrop-blur-md bg-white/35 border border-white/60 rounded-2xl p-5 shadow-xl shadow-sky-900/10">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/50">
+                <div className="flex items-center gap-2">
+                  <Server className="w-4 h-4 text-blue-600" />
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Active Pipeline</span>
                 </div>
-                <span>Self-hosted</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                  Live
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full border border-orange-500/60 flex items-center justify-center text-orange-500 bg-orange-500/10">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-2.5 text-xs text-slate-700">
+                  <GitBranch className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-slate-900">main branch</p>
+                    <p className="text-[11px] text-slate-500">Commit: #8f32a0c</p>
+                  </div>
                 </div>
-                <span>Developer-first</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full border border-orange-500/60 flex items-center justify-center text-orange-500 bg-orange-500/10">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+
+                <div className="flex items-center justify-between text-xs pt-2">
+                  <span className="text-slate-600">Region</span>
+                  <span className="font-medium text-slate-900">us-east (N. Virginia)</span>
                 </div>
-                <span>Built for you</span>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600">Build Time</span>
+                  <span className="font-medium text-slate-900">1.42s</span>
+                </div>
+
+                <div className="pt-2 flex items-center gap-2 text-xs text-emerald-600 font-medium">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>SSL & Edge Routing Active</span>
+                </div>
               </div>
             </div>
-          </motion.div>
-
-          {/* Right Column: Premium Deployment Dashboard Preview */}
-          <motion.div 
-            className="lg:col-span-7 relative"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            {/* Outer Container with Glowing Orange Border */}
-            <div className="relative bg-[#09090c] border-2 border-orange-500/70 rounded-2xl shadow-[0_0_50px_rgba(249,115,22,0.18)] overflow-hidden text-zinc-300 text-xs font-sans">
-              <div className="flex flex-col md:flex-row min-h-[460px]">
-                
-                {/* Sidebar */}
-                <aside className="w-full md:w-44 bg-[#070709] border-b md:border-b-0 md:border-r border-zinc-800/80 p-3.5 flex flex-col justify-between shrink-0">
-                  <div className="space-y-4">
-                    {/* Brand Icon Box */}
-                    <div className="px-1 pt-0.5">
-                      <div className="w-8 h-8 rounded-lg bg-[#0d0d12] border-2 border-orange-500 flex items-center justify-center font-bold text-orange-500 text-sm shadow-md">
-                        H
-                      </div>
-                    </div>
-
-                    {/* Nav List */}
-                    <nav className="space-y-1">
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-orange-500 text-white font-semibold text-xs shadow-md shadow-orange-500/20">
-                        <Home className="w-3.5 h-3.5" />
-                        <span>Overview</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 transition-colors text-xs">
-                        <FolderGit2 className="w-3.5 h-3.5" />
-                        <span>Projects</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 transition-colors text-xs">
-                        <Layers className="w-3.5 h-3.5" />
-                        <span>Deployments</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 transition-colors text-xs">
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Logs</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 transition-colors text-xs">
-                        <Bot className="w-3.5 h-3.5" />
-                        <span>AI Assistant</span>
-                      </button>
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 transition-colors text-xs">
-                        <Settings className="w-3.5 h-3.5" />
-                        <span>Settings</span>
-                      </button>
-                    </nav>
-                  </div>
-
-                  {/* User Profile */}
-                  <div className="pt-3 border-t border-zinc-900 flex items-center gap-2.5 px-1">
-                    <div className="w-7 h-7 rounded-full bg-zinc-800 text-zinc-200 flex items-center justify-center font-bold text-[10px] border border-zinc-700">
-                      JD
-                    </div>
-                    <div className="overflow-hidden text-left">
-                      <p className="text-[11px] font-semibold text-white leading-none">John Doe</p>
-                      <p className="text-[9px] text-zinc-500 leading-tight mt-0.5">Pro Plan</p>
-                    </div>
-                  </div>
-                </aside>
-
-                {/* Main Dashboard Area */}
-                <main className="flex-1 p-4 sm:p-5 space-y-4 overflow-hidden bg-[#0a0a0e]">
-                  
-                  {/* Dashboard Header */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/60 pb-3">
-                    <div className="text-left">
-                      <h2 className="text-sm font-bold text-white flex items-center gap-1.5">
-                        Welcome back, Developer <span>👋</span>
-                      </h2>
-                      <p className="text-[10px] text-zinc-400">Here's what's happening with your projects</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] text-zinc-400 flex items-center gap-1">
-                        Last updated 2m ago
-                        <RefreshCw className="w-2.5 h-2.5" />
-                      </span>
-                      <button 
-                        onClick={() => navigate(ROUTES.DASHBOARD)}
-                        className="bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-md flex items-center gap-1 shadow transition-colors cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>New Project</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 4 Stats Cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {STATS.map((stat) => (
-                      <div key={stat.label} className="bg-zinc-900/60 border border-zinc-800/80 p-2.5 rounded-xl text-left">
-                        <p className="text-[10px] text-zinc-400 font-medium">{stat.label}</p>
-                        <p className="text-base font-extrabold text-white mt-0.5">{stat.value}</p>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          {stat.showArrow && (
-                            stat.isPositive ? (
-                              <TrendingUp className="w-2.5 h-2.5 text-emerald-400" />
-                            ) : (
-                              <TrendingDown className="w-2.5 h-2.5 text-rose-500" />
-                            )
-                          )}
-                          <span className={`text-[9px] font-bold ${stat.isPositive ? 'text-emerald-400' : 'text-rose-500'}`}>
-                            {stat.change}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Lower Grid Split */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-0.5">
-                    
-                    {/* Left: Recent Deployments & AI Banner */}
-                    <div className="sm:col-span-7 bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-3 space-y-2.5 text-left">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[11px] font-bold text-white">Recent Deployments</h3>
-                        <button onClick={() => navigate(ROUTES.DASHBOARD)} className="text-[9px] text-zinc-400 hover:text-zinc-200">
-                          View all
-                        </button>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        {RECENT_DEPLOYMENTS.map((dep) => (
-                          <div 
-                            key={dep.id} 
-                            className="flex items-center justify-between p-1.5 rounded-lg hover:bg-zinc-800/40 transition-colors text-[10px]"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className={`w-4 h-4 rounded flex items-center justify-center font-bold text-[9px] shrink-0 ${
-                                dep.status === 'Success' 
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                  : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                              }`}>
-                                {dep.icon}
-                              </div>
-                              <span className="font-semibold text-zinc-200 truncate">{dep.name}</span>
-                              <span className="text-zinc-500 text-[9px]">{dep.branch}</span>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-zinc-500 text-[9px]">{dep.time}</span>
-                              <span className={`flex items-center gap-1 font-semibold text-[9px] ${
-                                dep.status === 'Success' ? 'text-emerald-400' : 'text-rose-400'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${dep.status === 'Success' ? 'bg-emerald-400' : 'bg-rose-500'}`} />
-                                {dep.status}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* AI Assistant Box */}
-                      <div className="mt-2 bg-gradient-to-r from-zinc-900 to-zinc-950 border border-zinc-800 rounded-lg p-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-left">
-                          <div className="w-6 h-6 rounded-md bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
-                            <Bot className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-white leading-none">AI Assistant</p>
-                            <p className="text-[9px] text-zinc-400 mt-0.5">Hi! I'm HAVN AI</p>
-                            <p className="text-[8px] text-zinc-500">Here to help you deploy better.</p>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                      </div>
-                    </div>
-
-                    {/* Right: Build Overview & Quick Notes */}
-                    <div className="sm:col-span-5 space-y-3">
-                      
-                      {/* Graph Card */}
-                      <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-3 text-left space-y-2">
-                        <h3 className="text-[11px] font-bold text-white">Build Overview</h3>
-                        
-                        <div className="relative h-24 w-full flex items-center">
-                          {/* Y-axis labels */}
-                          <div className="flex flex-col justify-between h-full text-[8px] text-zinc-500 pr-1 select-none">
-                            <span>30</span>
-                            <span>20</span>
-                            <span>10</span>
-                            <span>0</span>
-                          </div>
-
-                          {/* Chart SVG */}
-                          <div className="relative flex-1 h-full">
-                            <svg className="w-full h-full overflow-visible" viewBox="0 0 160 80" fill="none" preserveAspectRatio="none">
-                              {/* Grid lines */}
-                              <line x1="0" y1="0" x2="160" y2="0" stroke="#27272a" strokeDasharray="2 2" strokeWidth="0.5" />
-                              <line x1="0" y1="26" x2="160" y2="26" stroke="#27272a" strokeDasharray="2 2" strokeWidth="0.5" />
-                              <line x1="0" y1="53" x2="160" y2="53" stroke="#27272a" strokeDasharray="2 2" strokeWidth="0.5" />
-                              <line x1="0" y1="80" x2="160" y2="80" stroke="#27272a" strokeDasharray="2 2" strokeWidth="0.5" />
-
-                              {/* Glowing Line path */}
-                              <path
-                                d="M 10 60 Q 30 20 50 30 T 90 42 T 130 28 L 150 12"
-                                stroke="#f97316"
-                                strokeWidth="2"
-                                fill="none"
-                              />
-
-                              {/* Nodes on chart */}
-                              <circle cx="10" cy="60" r="2.5" fill="#f97316" />
-                              <circle cx="45" cy="28" r="2.5" fill="#f97316" />
-                              <circle cx="80" cy="42" r="2.5" fill="#f97316" />
-                              <circle cx="115" cy="32" r="2.5" fill="#f97316" />
-                              <circle cx="150" cy="12" r="3" fill="#f97316" className="animate-pulse" />
-                            </svg>
-                          </div>
-                        </div>
-
-                        {/* X-axis labels */}
-                        <div className="flex justify-between text-[8px] text-zinc-500 pl-4 pt-1 border-t border-zinc-900">
-                          <span>May 20</span>
-                          <span>May 21</span>
-                          <span>May 22</span>
-                          <span>May 23</span>
-                          <span>May 24</span>
-                        </div>
-                      </div>
-
-                      {/* Quick Notes Card */}
-                      <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-3 text-left space-y-1">
-                        <h3 className="text-[11px] font-bold text-white">Quick Notes</h3>
-                        <p className="text-[10px] text-zinc-400 leading-tight">
-                          Remember to set environment variables before deploying to production.
-                        </p>
-                        <div className="flex items-center justify-between pt-1">
-                          <span className="text-[8px] text-zinc-500">2m ago</span>
-                          <ChevronRight className="w-3 h-3 text-zinc-400" />
-                        </div>
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                </main>
-
-              </div>
-            </div>
-          </motion.div>
+          </div>
 
         </div>
+
+        {/* BOTTOM: Floating Dashboard Product Preview */}
+        <div className="w-full max-w-5xl mt-4 relative z-20">
+          <div className="backdrop-blur-xl bg-white/50 border border-white/70 rounded-2xl p-2 sm:p-3 shadow-2xl shadow-blue-950/20">
+            {/* Dashboard Header Mock */}
+            <div className="bg-slate-900/90 rounded-xl overflow-hidden border border-slate-800 shadow-inner">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-950/60">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                  <span className="ml-2 text-xs text-slate-400 font-mono">cloud-cluster-prod // overview</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-blue-400" /> CPU: 14%
+                  </span>
+                  <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                    <Server className="w-3.5 h-3.5 text-emerald-400" /> RAM: 2.1 GB
+                  </span>
+                </div>
+              </div>
+
+              {/* Dashboard Content Mock */}
+              <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50">
+                  <p className="text-xs text-slate-400 mb-1">Total Requests / min</p>
+                  <p className="text-2xl font-bold text-white">142,890</p>
+                  <div className="mt-2 h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full w-[72%]" />
+                  </div>
+                </div>
+
+                <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50">
+                  <p className="text-xs text-slate-400 mb-1">Global Health Index</p>
+                  <p className="text-2xl font-bold text-emerald-400">99.99%</p>
+                  <div className="mt-2 h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full w-[99%]" />
+                  </div>
+                </div>
+
+                <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50">
+                  <p className="text-xs text-slate-400 mb-1">Active Edge Nodes</p>
+                  <p className="text-2xl font-bold text-sky-300">324 Nodes</p>
+                  <div className="mt-2 h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-sky-400 rounded-full w-[85%]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   );

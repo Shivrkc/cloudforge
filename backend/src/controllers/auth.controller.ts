@@ -1,3 +1,4 @@
+/*auth.controller.ts*/
 import { Request, Response } from "express";
 import * as authService from "../services/auth.service";
 import { AuthRequest } from "../middleware/auth.middleware";

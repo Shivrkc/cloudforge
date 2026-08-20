@@ -1,13 +1,21 @@
-import { useState, useEffect, FormEvent, useRef } from 'react';
+import { useState, useEffect, FormEvent, useRef, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Plus, Search, Github, GitBranch, CheckCircle2, 
   AlertTriangle, RefreshCw, Database, Key, Trash, 
   ExternalLink, Activity, Layers, Server, 
-  Clock, TrendingUp
+  Clock, TrendingUp, Lock, RefreshCcw, AlertCircle
 } from 'lucide-react';
-import { Project, Deployment, Repository } from '../types';
-import { MOCK_DEPLOYMENTS, MOCK_REPOSITORIES, SIMULATED_BUILD_STEPS } from '../data/mockData';
+import { Project, Deployment } from '../types';
+import { MOCK_DEPLOYMENTS, SIMULATED_BUILD_STEPS } from '../data/mockData';
 import { getProjects, createProject, BackendProject } from '../services/project.service';
+import { 
+  getGithubStatus, 
+  getGithubRepositories, 
+  getGithubBranches, 
+  GithubRepository, 
+  GithubBranch 
+} from '../services/github.service';
 
 const formatRelativeTime = (dateString: string): string => {
   if (!dateString) return 'Just now';
@@ -41,13 +49,33 @@ const mapBackendProjectToProject = (bp: BackendProject): Project => {
 
 export default function Dashboard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
+  // Projects State
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState<boolean>(true);
   const [projectError, setProjectError] = useState<string | null>(null);
 
+  // GitHub Integration State
+  const [githubConnected, setGithubConnected] = useState<boolean>(false);
+  const [githubUsername, setGithubUsername] = useState<string | null>(null);
+  const [loadingGithubStatus, setLoadingGithubStatus] = useState<boolean>(true);
+  const [githubStatusError, setGithubStatusError] = useState<string | null>(null);
+
+  // GitHub Repositories & Branches State
+  const [githubRepos, setGithubRepos] = useState<GithubRepository[]>([]);
+  const [loadingRepos, setLoadingRepos] = useState<boolean>(false);
+  const [repoError, setRepoError] = useState<string | null>(null);
+
+  const [selectedRepo, setSelectedRepo] = useState<GithubRepository | null>(null);
+  const [branches, setBranches] = useState<GithubBranch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>('');
+  const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
+  const [branchError, setBranchError] = useState<string | null>(null);
+
+  // UI Tabs & Deployments State
   const [deployments, setDeployments] = useState<Deployment[]>(MOCK_DEPLOYMENTS);
-  const [repos] = useState<Repository[]>(MOCK_REPOSITORIES);
   const [activeTab, setActiveTab] = useState<'overview' | 'deployments' | 'databases' | 'env-vars'>('overview');
   
   // Connect Repo Modal States
@@ -56,7 +84,6 @@ export default function Dashboard() {
   const [isBuildingNewProject, setIsBuildingNewProject] = useState(false);
   const [newProjectLogs, setNewProjectLogs] = useState<string[]>([]);
   const [buildingProgress, setBuildingProgress] = useState(0);
-  const [activeBuildingRepo, setActiveBuildingRepo] = useState<Repository | null>(null);
 
   // Database Tab States
   const [databases, setDatabases] = useState<Array<{ id: string; name: string; status: 'active' | 'provisioning'; url: string; size: string }>>([
@@ -76,6 +103,41 @@ export default function Dashboard() {
 
   // Search filter
   const [searchProjectQuery, setSearchProjectQuery] = useState('');
+
+  // Fetch GitHub Connection Status
+  const fetchGithubStatus = useCallback(async () => {
+    setLoadingGithubStatus(true);
+    setGithubStatusError(null);
+    try {
+      const status = await getGithubStatus();
+      setGithubConnected(status.connected);
+      if (status.connected && status.github) {
+        setGithubUsername(status.github.username);
+      } else {
+        setGithubUsername(null);
+      }
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
+      setGithubStatusError(errorObj.response?.data?.message || errorObj.message || 'Failed to fetch GitHub status');
+      setGithubConnected(false);
+    } finally {
+      setLoadingGithubStatus(false);
+    }
+  }, []);
+
+  // Check URL parameters for OAuth redirects and handle URL cleanup
+  useEffect(() => {
+    const success = searchParams.get('github_success');
+    const error = searchParams.get('github_error');
+
+    if (success || error) {
+      fetchGithubStatus();
+      // Clean query parameters from URL without triggering a full page reload
+      navigate('/dashboard', { replace: true });
+    } else {
+      fetchGithubStatus();
+    }
+  }, [searchParams, navigate, fetchGithubStatus]);
 
   // Fetch Projects from Backend API on mount
   useEffect(() => {
@@ -107,6 +169,52 @@ export default function Dashboard() {
       isMounted = false;
     };
   }, []);
+
+  // Fetch Repositories when Modal Opens and GitHub is connected
+  useEffect(() => {
+    if (isConnectModalOpen && githubConnected) {
+      setLoadingRepos(true);
+      setRepoError(null);
+      getGithubRepositories()
+        .then((repos) => {
+          setGithubRepos(repos);
+        })
+        .catch((err) => {
+          const msg = err.response?.data?.message || err.message || 'Failed to load GitHub repositories';
+          setRepoError(msg);
+        })
+        .finally(() => {
+          setLoadingRepos(false);
+        });
+    }
+  }, [isConnectModalOpen, githubConnected]);
+
+  // Fetch Branches when a repository is selected
+  const handleSelectRepo = async (repo: GithubRepository) => {
+    setSelectedRepo(repo);
+    setSelectedBranch('');
+    setBranches([]);
+    setLoadingBranches(true);
+    setBranchError(null);
+
+    try {
+      const fetchedBranches = await getGithubBranches(repo.owner, repo.name);
+      setBranches(fetchedBranches);
+      if (fetchedBranches.length > 0) {
+        const defaultBranchObj = fetchedBranches.find(b => b.name === repo.defaultBranch);
+        setSelectedBranch(defaultBranchObj ? defaultBranchObj.name : fetchedBranches[0].name);
+      }
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
+      setBranchError(errorObj.response?.data?.message || errorObj.message || 'Failed to load repository branches');
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
+
+  const handleConnectGithubOAuth = () => {
+    window.location.href = '/api/github/connect';
+  };
 
   // Subtle High-Altitude Sky Background Canvas Animation
   useEffect(() => {
@@ -216,15 +324,15 @@ export default function Dashboard() {
     };
   }, []);
 
-  const handleConnectRepo = (repo: Repository) => {
-    setActiveBuildingRepo(repo);
+  const handleStartDeployment = () => {
+    if (!selectedRepo) return;
     setIsBuildingNewProject(true);
     setBuildingProgress(0);
-    setNewProjectLogs([`[14:40:01] Preparing secure Sandbox runner...`]);
+    setNewProjectLogs([`[14:40:01] Preparing secure Sandbox runner for ${selectedRepo.fullName}...`]);
   };
 
   useEffect(() => {
-    if (!isBuildingNewProject || !activeBuildingRepo) return;
+    if (!isBuildingNewProject || !selectedRepo) return;
 
     const totalSteps = SIMULATED_BUILD_STEPS.length;
     let step = 0;
@@ -238,15 +346,15 @@ export default function Dashboard() {
       } else {
         clearInterval(interval);
         
-        const newProjName = activeBuildingRepo.name;
-        const repoFullName = `${activeBuildingRepo.owner}/${activeBuildingRepo.name}`;
-        const repoUrl = `https://${newProjName}.cloudforge.app`;
+        const newProjName = selectedRepo.name;
+        const repoFullName = selectedRepo.fullName;
+        const targetBranch = selectedBranch || selectedRepo.defaultBranch || 'main';
 
         createProject({
           name: newProjName,
           repositoryName: repoFullName,
-          repositoryUrl: repoUrl,
-          branch: activeBuildingRepo.branch || 'main',
+          repositoryUrl: selectedRepo.url,
+          branch: targetBranch,
           status: 'ready'
         })
           .then((createdBackendProject) => {
@@ -256,11 +364,11 @@ export default function Dashboard() {
               id: `d-${Date.now()}`,
               projectName: newProjName,
               status: 'ready',
-              branch: activeBuildingRepo.branch,
+              branch: targetBranch,
               commitMsg: 'initial cloudforge import deploy',
               commitHash: 'cf7b92a',
               deployedAt: 'Just now',
-              url: `https://${newProjName}-cf7b92a.cloudforge.app`,
+              url: createdBackendProject.repositoryUrl || `https://${newProjName}.cloudforge.app`,
               environment: 'production'
             };
 
@@ -278,7 +386,9 @@ export default function Dashboard() {
             setTimeout(() => {
               setIsBuildingNewProject(false);
               setIsConnectModalOpen(false);
-              setActiveBuildingRepo(null);
+              setSelectedRepo(null);
+              setSelectedBranch('');
+              setBranches([]);
               setNewProjectLogs([]);
               setBuildingProgress(0);
             }, 1500);
@@ -287,7 +397,7 @@ export default function Dashboard() {
     }, 700);
 
     return () => clearInterval(interval);
-  }, [isBuildingNewProject, activeBuildingRepo, newEnvProject]);
+  }, [isBuildingNewProject, selectedRepo, selectedBranch]);
 
   const handleProvisionDb = (e: FormEvent) => {
     e.preventDefault();
@@ -360,20 +470,40 @@ export default function Dashboard() {
                   <span className="text-[11px] bg-blue-100/90 text-blue-900 border border-blue-200 px-2.5 py-0.5 rounded-full font-bold shadow-2xs">
                     Hobby Plan
                   </span>
+                  {githubConnected && githubUsername && (
+                    <span className="flex items-center gap-1 text-[11px] bg-slate-900 text-white px-2.5 py-0.5 rounded-full font-bold shadow-2xs">
+                      <Github className="w-3 h-3" /> @{githubUsername}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-700 font-semibold">Personal Developer Workspace • Cloud Deployment Engine</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsConnectModalOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-3 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 flex items-center gap-2 active:scale-[0.98] cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                Connect Repository
-              </button>
+              {loadingGithubStatus ? (
+                <div className="text-xs text-slate-500 font-bold flex items-center gap-1.5 px-3 py-2 bg-white/50 rounded-xl border border-white/80">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" /> Checking GitHub status...
+                </div>
+              ) : !githubConnected ? (
+                <button
+                  type="button"
+                  onClick={handleConnectGithubOAuth}
+                  className="bg-slate-900 hover:bg-black text-white font-bold text-xs py-3 px-5 rounded-xl transition-all shadow-lg shadow-slate-900/20 hover:shadow-xl flex items-center gap-2 active:scale-[0.98] cursor-pointer"
+                >
+                  <Github className="w-4 h-4" />
+                  Connect GitHub
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsConnectModalOpen(true)}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs py-3 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 flex items-center gap-2 active:scale-[0.98] cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Connect Repository
+                </button>
+              )}
             </div>
           </div>
 
@@ -847,11 +977,18 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center px-4">
           <div className="backdrop-blur-2xl bg-white/90 border border-white rounded-3xl w-full max-w-xl shadow-2xl relative overflow-hidden transition-all motion-safe:animate-fade-in-up">
             <div className="px-6 py-5 border-b border-slate-200/80 flex items-center justify-between">
-              <h3 className="font-extrabold text-base text-slate-900">Connect GitHub Repository</h3>
+              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <Github className="w-4 h-4" /> Connect GitHub Repository
+              </h3>
               <button
                 type="button"
                 onClick={() => {
-                  if (!isBuildingNewProject) setIsConnectModalOpen(false);
+                  if (!isBuildingNewProject) {
+                    setIsConnectModalOpen(false);
+                    setSelectedRepo(null);
+                    setSelectedBranch('');
+                    setBranches([]);
+                  }
                 }}
                 className="text-slate-400 hover:text-slate-700 font-bold cursor-pointer text-xs"
                 disabled={isBuildingNewProject}
@@ -861,44 +998,179 @@ export default function Dashboard() {
             </div>
 
             <div className="p-6">
-              {!isBuildingNewProject ? (
-                <div className="space-y-5">
-                  <p className="text-slate-700 text-xs leading-relaxed font-semibold">
-                    Import and launch configurations from your existing personal accounts seamlessly.
-                  </p>
-
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Search className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search available repositories..."
-                      value={searchRepoQuery}
-                      onChange={(e) => setSearchRepoQuery(e.target.value)}
-                      className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all font-semibold shadow-2xs focus:ring-2 focus:ring-blue-500/20"
-                    />
+              {!githubConnected ? (
+                <div className="text-center py-8 space-y-4">
+                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto text-slate-700">
+                    <Github className="w-6 h-6" />
                   </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-slate-900">GitHub Not Connected</h4>
+                    <p className="text-xs text-slate-600 max-w-xs mx-auto">
+                      Connect your GitHub account to import and deploy repositories directly into HAVN.
+                    </p>
+                  </div>
+                  {githubStatusError && (
+                    <p className="text-xs text-red-500 font-medium">{githubStatusError}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleConnectGithubOAuth}
+                    className="bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 px-5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mx-auto cursor-pointer"
+                  >
+                    <Github className="w-4 h-4" />
+                    Authenticate with GitHub
+                  </button>
+                </div>
+              ) : !isBuildingNewProject ? (
+                <div className="space-y-5">
+                  {!selectedRepo ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <p className="text-slate-700 text-xs leading-relaxed font-semibold">
+                          Select a repository from account <span className="text-blue-600 font-bold">@{githubUsername}</span>:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoadingRepos(true);
+                            setRepoError(null);
+                            getGithubRepositories()
+                              .then(setGithubRepos)
+                              .catch(err => setRepoError(err.message))
+                              .finally(() => setLoadingRepos(false));
+                          }}
+                          className="text-slate-500 hover:text-slate-800 p-1 cursor-pointer"
+                          title="Refresh Repositories"
+                        >
+                          <RefreshCcw className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
 
-                  <div className="divide-y divide-slate-200/80 border border-slate-200 rounded-2xl max-h-60 overflow-y-auto bg-white/50">
-                    {repos
-                      .filter(r => r.name.toLowerCase().includes(searchRepoQuery.toLowerCase()))
-                      .map((repo) => (
-                        <div key={repo.id} className="p-4 flex items-center justify-between hover:bg-white transition-colors">
-                          <div className="space-y-0.5">
-                            <span className="text-xs font-bold text-slate-900 block">{repo.name}</span>
-                            <span className="text-[10px] font-semibold text-slate-500">Branch: {repo.branch} • Language: {repo.language}</span>
-                          </div>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                          <Search className="w-4 h-4" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Search available repositories..."
+                          value={searchRepoQuery}
+                          onChange={(e) => setSearchRepoQuery(e.target.value)}
+                          className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all font-semibold shadow-2xs focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </div>
+
+                      {loadingRepos ? (
+                        <div className="text-center py-10 space-y-2">
+                          <RefreshCw className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
+                          <p className="text-xs font-bold text-slate-600">Fetching GitHub Repositories...</p>
+                        </div>
+                      ) : repoError ? (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-center space-y-2">
+                          <AlertCircle className="w-6 h-6 text-red-500 mx-auto" />
+                          <p className="text-xs font-bold text-red-800">{repoError}</p>
+                        </div>
+                      ) : githubRepos.length === 0 ? (
+                        <div className="text-center py-8 text-xs text-slate-500 font-bold">
+                          No repositories found for this account.
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-slate-200/80 border border-slate-200 rounded-2xl max-h-60 overflow-y-auto bg-white/50">
+                          {githubRepos
+                            .filter(r => r.name.toLowerCase().includes(searchRepoQuery.toLowerCase()) || r.fullName.toLowerCase().includes(searchRepoQuery.toLowerCase()))
+                            .map((repo) => (
+                              <div key={repo.id} className="p-4 flex items-center justify-between hover:bg-white transition-colors">
+                                <div className="space-y-0.5 max-w-xs">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-slate-900 block truncate">{repo.fullName}</span>
+                                    {repo.private && <Lock className="w-3 h-3 text-slate-400 flex-shrink-0" />}
+                                  </div>
+                                  <span className="text-[10px] font-semibold text-slate-500 truncate block">
+                                    {repo.description || `Default branch: ${repo.defaultBranch}`}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectRepo(repo)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer flex-shrink-0"
+                                >
+                                  Select
+                                </button>
+                              </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-slate-900">{selectedRepo.fullName}</span>
                           <button
                             type="button"
-                            onClick={() => handleConnectRepo(repo)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer"
+                            onClick={() => {
+                              setSelectedRepo(null);
+                              setSelectedBranch('');
+                              setBranches([]);
+                            }}
+                            className="text-xs text-blue-600 font-bold hover:underline cursor-pointer"
                           >
-                            Deploy
+                            Change Repo
                           </button>
                         </div>
-                    ))}
-                  </div>
+                        <p className="text-[11px] text-slate-600 font-medium">
+                          {selectedRepo.description || 'No description provided.'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-700">
+                          Select Target Branch
+                        </label>
+                        {loadingBranches ? (
+                          <div className="flex items-center gap-2 text-xs text-slate-500 p-2.5 bg-white border border-slate-200 rounded-xl">
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" /> Fetching branches...
+                          </div>
+                        ) : branchError ? (
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-bold">
+                            {branchError}
+                          </div>
+                        ) : (
+                          <select
+                            value={selectedBranch}
+                            onChange={(e) => setSelectedBranch(e.target.value)}
+                            className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none cursor-pointer"
+                          >
+                            {branches.map((b) => (
+                              <option key={b.name} value={b.name}>
+                                {b.name} {b.protected ? '🔒 (Protected)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      <div className="pt-2 flex justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedRepo(null);
+                            setSelectedBranch('');
+                          }}
+                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-xl border border-slate-200 cursor-pointer"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!selectedBranch || loadingBranches}
+                          onClick={handleStartDeployment}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold text-xs py-2 px-5 rounded-xl transition-all shadow-md cursor-pointer"
+                        >
+                          Deploy Project
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-5">

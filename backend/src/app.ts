@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import projectRoutes from "./routes/project.routes";
-
+import githubRoutes from "./routes/github.routes";
 import healthRoutes from "./routes/health.routes";
 
 const app = express();
@@ -13,5 +13,6 @@ app.use(express.json());
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/github", githubRoutes);
 
 export default app;

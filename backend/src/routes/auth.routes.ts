@@ -1,3 +1,4 @@
+/*auth.routs.ts*/
 import { Router, Request, Response } from "express";
 import {
   registerUser,

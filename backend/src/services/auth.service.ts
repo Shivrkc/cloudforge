@@ -1,3 +1,4 @@
+/*auth.service.ts*/
 import bcrypt from "bcrypt";
 import prisma from "../lib/prisma";
 import { AUTH_MESSAGES } from "../constants/messages";

@@ -1,107 +1,276 @@
-import { useState } from 'react';
-import { HelpCircle, ChevronDown } from 'lucide-react';
-import { FAQ_ITEMS } from '../../data/mockData';
+import React, { useEffect, useRef } from 'react';
+import { Github, Twitter, Disc as Discord } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routes';
+import Logo from '../ui/Logo';
 
-export default function Faq() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+export default function Footer() {
+  const navigate = useNavigate();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const toggleAccordion = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  // Continuous Dynamic Sky + Cloud Ocean Canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = canvas.parentElement?.offsetHeight || 500);
+
+    const handleResize = () => {
+      if (!canvas || !canvas.parentElement) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = canvas.parentElement.offsetHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const cloudCount = 30;
+    interface CloudPuff {
+      xRatio: number;
+      z: number;
+      radius: number;
+      opacity: number;
+    }
+
+    const clouds: CloudPuff[] = Array.from({ length: cloudCount }, () => ({
+      xRatio: (Math.random() - 0.5) * 2.5,
+      z: Math.random(),
+      radius: 120 + Math.random() * 160,
+      opacity: 0.35 + Math.random() * 0.35,
+    }));
+
+    const speed = 0.0003;
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Sky gradient continuation matching bottom of FAQ
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+      skyGrad.addColorStop(0, '#f0f9ff'); // Smooth sky transition
+      skyGrad.addColorStop(0.6, '#bae6fd');
+      skyGrad.addColorStop(1, '#e0f2fe');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Cloud ocean depth rendering
+      clouds.sort((a, b) => a.z - b.z);
+
+      clouds.forEach((cloud) => {
+        cloud.z += speed;
+        if (cloud.z > 1) {
+          cloud.z -= 1;
+          cloud.xRatio = (Math.random() - 0.5) * 2.5;
+        }
+
+        const perspective = Math.pow(cloud.z, 2);
+        const screenY = perspective * height;
+        const screenX = width / 2 + cloud.xRatio * width * (0.4 + perspective * 0.7);
+        const currentRadius = cloud.radius * (0.4 + perspective * 1.5);
+        const currentOpacity = Math.min(cloud.opacity, cloud.z * 1.1);
+
+        const cloudGlow = ctx.createRadialGradient(
+          screenX - currentRadius * 0.2,
+          screenY - currentRadius * 0.3,
+          currentRadius * 0.1,
+          screenX,
+          screenY,
+          currentRadius
+        );
+
+        cloudGlow.addColorStop(0, `rgba(255, 255, 255, ${currentOpacity})`);
+        cloudGlow.addColorStop(0.6, `rgba(241, 245, 249, ${currentOpacity * 0.8})`);
+        cloudGlow.addColorStop(1, 'rgba(203, 213, 225, 0)');
+
+        ctx.beginPath();
+        ctx.fillStyle = cloudGlow;
+        ctx.arc(screenX, screenY, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   return (
-    <section id="faq" className="py-24 sm:py-32 bg-[#060608] border-t border-zinc-800/40 relative overflow-hidden">
-      {/* Background ambient HAVN orange glow */}
-      <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-[140px] pointer-events-none -z-0" />
+    <footer className="pt-16 pb-12 text-slate-700 text-xs relative overflow-hidden font-sans border-t border-white/60 selection:bg-sky-200">
+      
+      {/* Background Canvas extending cloud environment */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none z-0"
+      />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
         
-        {/* Header Block */}
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-orange-400 bg-orange-500/10 border border-orange-500/20 shadow-sm">
-            <HelpCircle className="w-3.5 h-3.5 text-orange-400" />
-            <span>FAQ DATABASE</span>
-          </div>
-          
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-sans">
-            Frequently Answered Concerns
-          </h2>
-          
-          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed font-sans">
-            Everything you need to know about setting up integrations, automatic builds, bandwidth limitations, and high-performance serverless computations.
-          </p>
-        </div>
-
-        {/* Expandable Accordion Cards List */}
-        <div className="space-y-4 max-w-3xl mx-auto">
-          {FAQ_ITEMS.map((faq: any, index: number) => {
-            const isOpen = openIndex === index;
+        {/* Main Footer Glass Card */}
+        <div className="backdrop-blur-xl bg-white/40 hover:bg-white/50 border border-white/70 rounded-3xl p-8 sm:p-12 shadow-xl shadow-sky-900/5 transition-colors duration-300 motion-safe:animate-fade-in-up">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-10 pb-10 border-b border-slate-200/60 text-left">
             
-            return (
-              <div
-                key={index}
-                className={`rounded-2xl transition-all duration-300 border overflow-hidden backdrop-blur-sm ${
-                  isOpen 
-                    ? 'bg-[#0d0d12] border-zinc-700/80 shadow-lg shadow-orange-500/5' 
-                    : 'bg-[#09090c]/90 border-zinc-800/80 hover:border-zinc-700/60'
-                }`}
+            {/* Brand Info */}
+            <div className="md:col-span-2 space-y-4">
+              <div 
+                onClick={() => navigate(ROUTES.HOME)}
+                className="flex items-center gap-2.5 cursor-pointer group inline-block"
               >
-                <button
-                  type="button"
-                  onClick={() => toggleAccordion(index)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-left cursor-pointer group transition-colors"
-                >
-                  <span className={`font-sans font-semibold text-base sm:text-lg leading-snug transition-colors ${
-                    isOpen ? 'text-orange-400' : 'text-white group-hover:text-zinc-200'
-                  }`}>
-                    {faq.question}
-                  </span>
-                  <span className={`ml-4 p-2 rounded-xl border flex-shrink-0 transition-all duration-300 ${
-                    isOpen 
-                      ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' 
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 group-hover:border-zinc-700 group-hover:text-zinc-200'
-                  }`}>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-                  </span>
-                </button>
-
-                {/* Smooth Grid-based Collapse Animation */}
-                <div
-                  className={`grid transition-all duration-300 ease-in-out ${
-                    isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <p className="px-6 pb-6 pt-2 text-sm sm:text-base text-zinc-400 leading-relaxed font-sans border-t border-zinc-800/40">
-                      {faq.answer}
-                    </p>
-                  </div>
-                </div>
+                <Logo />
               </div>
-            );
-          })}
-        </div>
+              <p className="text-slate-600 max-w-sm text-xs leading-relaxed font-medium">
+                HAVN is the developer-centric platform to build, deploy, and scale modern web applications with zero ops friction.
+              </p>
+              
+              {/* Social Media Links */}
+              <div className="flex items-center gap-3 pt-2">
+                <a
+                  href="https://github.com/Shivrkc/cloudforge"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="HAVN GitHub Repository"
+                  className="w-9 h-9 rounded-xl bg-white/60 hover:bg-white/90 border border-white/80 flex items-center justify-center text-slate-700 hover:text-blue-600 shadow-2xs hover:shadow-xs transition-all duration-200"
+                >
+                  <Github className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="HAVN Twitter Profile"
+                  className="w-9 h-9 rounded-xl bg-white/60 hover:bg-white/90 border border-white/80 flex items-center justify-center text-slate-700 hover:text-blue-600 shadow-2xs hover:shadow-xs transition-all duration-200"
+                >
+                  <Twitter className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://discord.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="HAVN Discord Server"
+                  className="w-9 h-9 rounded-xl bg-white/60 hover:bg-white/90 border border-white/80 flex items-center justify-center text-slate-700 hover:text-blue-600 shadow-2xs hover:shadow-xs transition-all duration-200"
+                >
+                  <Discord className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
 
-        {/* CTA Developer Help Banner */}
-        <div className="text-center pt-2">
-          <div className="inline-block bg-zinc-950/60 border border-zinc-800/80 rounded-2xl px-6 py-4 backdrop-blur-sm">
-            <p className="text-xs sm:text-sm text-zinc-400 font-sans">
-              Have a technical query not listed in our database?{' '}
-              <a
-                href="#docs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Support channel is active in this mockup! Click Register or login to view active chat channels.');
-                }}
-                className="text-orange-400 hover:text-orange-300 font-medium underline underline-offset-4 decoration-orange-500/30 hover:decoration-orange-400 transition-colors"
-              >
-                Reach out to our Core Developers
-              </a>
-            </p>
+            {/* Nav Links Column 1: Product */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Product</h4>
+              <ul className="space-y-2.5 font-medium">
+                <li>
+                  <a href="#features" className="hover:text-blue-600 transition-colors">Features</a>
+                </li>
+                <li>
+                  <a href="#pricing" className="hover:text-blue-600 transition-colors">Pricing</a>
+                </li>
+                <li>
+                  <a href="#faq" className="hover:text-blue-600 transition-colors">FAQ</a>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => navigate(ROUTES.DASHBOARD)} 
+                    className="hover:text-blue-600 transition-colors text-left cursor-pointer"
+                  >
+                    Dashboard
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Nav Links Column 2: Resources */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Resources</h4>
+              <ul className="space-y-2.5 font-medium">
+                <li>
+                  <a href="https://github.com/Shivrkc/cloudforge" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/Shivrkc/cloudforge" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    API Reference
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/Shivrkc/cloudforge" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    Status
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Nav Links Column 3: Company */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Company</h4>
+              <ul className="space-y-2.5 font-medium">
+                <li>
+                  <a href="https://github.com/Shivrkc/cloudforge" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/Shivrkc/cloudforge" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/Shivrkc/cloudforge" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/Shivrkc/cloudforge" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-medium text-slate-600">
+            <p>© {new Date().getFullYear()} HAVN Inc. All rights reserved.</p>
+            <p className="text-slate-500">Designed for developers. Built for speed.</p>
           </div>
         </div>
 
       </div>
-    </section>
+
+      {/* Embedded Animation & Accessibility Styles */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .animate-fade-in-up {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+          .transition-colors, .transition-all {
+            transition: none !important;
+          }
+        }
+      `}</style>
+    </footer>
   );
 }
