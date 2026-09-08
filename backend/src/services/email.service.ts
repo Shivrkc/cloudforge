@@ -78,3 +78,58 @@ export const sendVerificationEmail = async (
 
   return data;
 };
+
+export const sendPasswordResetEmail = async (
+  to: string,
+  resetToken: string
+) => {
+  const resetUrl =
+    `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(
+      resetToken
+    )}`;
+
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: "Reset your CloudForge password",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Reset your HAVN password</h2>
+
+        <p>
+          We received a request to reset the password for your CloudForge account.
+        </p>
+
+        <p>
+          <a
+            href="${resetUrl}"
+            style="
+              display: inline-block;
+              padding: 12px 20px;
+              background: #2563eb;
+              color: white;
+              text-decoration: none;
+              border-radius: 8px;
+            "
+          >
+            Reset Password
+          </a>
+        </p>
+
+        <p>
+          This password reset link expires in 15 minutes.
+        </p>
+
+        <p>
+          If you did not request a password reset, you can safely ignore this email.
+        </p>
+      </div>
+    `,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};

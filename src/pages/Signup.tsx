@@ -179,6 +179,14 @@ export default function Signup() {
       setIsLoading(false);
     }
   };
+  const handleOAuthSignup = (provider: "google" | "github") => {
+  if (provider === "github") {
+    window.location.href = "http://localhost:5000/api/auth/github";
+    return;
+  }
+
+  window.location.href = "http://localhost:5000/api/auth/google";
+};
 
   if (registrationComplete) {
     return (
@@ -368,17 +376,19 @@ export default function Signup() {
 
             <div className="grid grid-cols-2 gap-3">
               <button
-                type="button"
-                className="flex items-center justify-center gap-2 py-2.5 border border-white/90 hover:border-blue-300 bg-white/75 hover:bg-white text-xs text-slate-800 font-bold rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer"
-              >
-                <Github className="w-4 h-4 text-slate-800" /> GitHub
-              </button>
+  type="button"
+  onClick={() => handleOAuthSignup("github")}
+  className="flex items-center justify-center gap-2 py-2.5 border border-white/90 hover:border-blue-300 bg-white/75 hover:bg-white text-xs text-slate-800 font-bold rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer"
+>
+  <Github className="w-4 h-4 text-slate-800" /> GitHub
+</button>
               <button
-                type="button"
-                className="flex items-center justify-center gap-2 py-2.5 border border-white/90 hover:border-blue-300 bg-white/75 hover:bg-white text-xs text-slate-800 font-bold rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer"
-              >
-                <Chrome className="w-4 h-4 text-blue-600" /> Google
-              </button>
+  type="button"
+  onClick={() => handleOAuthSignup("google")}
+  className="flex items-center justify-center gap-2 py-2.5 border border-white/90 hover:border-blue-300 bg-white/75 hover:bg-white text-xs text-slate-800 font-bold rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer"
+>
+  <Chrome className="w-4 h-4 text-blue-600" /> Google
+</button>
             </div>
 
             <p className="text-center text-xs text-slate-700 font-sans pt-2 font-semibold">

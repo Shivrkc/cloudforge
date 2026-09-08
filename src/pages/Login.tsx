@@ -220,7 +220,13 @@ export default function Login() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">Password</label>
-                  <a href="#forgot" onClick={(e) => e.preventDefault()} className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline">Forgot password?</a>
+                  <button
+  type="button"
+  onClick={() => navigate("/forgot-password")}
+  className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+>
+  Forgot password?
+</button>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

@@ -20,6 +20,8 @@ export default function Navbar({ scrollToSection }: NavbarProps) {
   const isLogin = location.pathname === ROUTES.LOGIN;
   const isSignup = location.pathname === ROUTES.SIGNUP;
   const isDashboard = location.pathname === ROUTES.DASHBOARD;
+  const isProfile = location.pathname === ROUTES.PROFILE;
+  const isAuthApp = isDashboard || isProfile;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,21 +52,21 @@ export default function Navbar({ scrollToSection }: NavbarProps) {
       <div
         className={`pointer-events-auto w-full max-w-6xl rounded-2xl transition-all duration-300 ease-out border shadow-[0_8px_30px_0_rgba(0,0,0,0.12),inset_0_1px_1px_0_rgba(255,255,255,0.35)] ${
           isScrolled
-            ? 'bg-white/15 backdrop-blur-xl border-white/30 shadow-[0_12px_36px_0_rgba(0,0,0,0.18)] py-2'
-            : 'bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 hover:border-white/30 py-2.5'
+            ? 'bg-slate-900/40 backdrop-blur-2xl border-white/30 shadow-[0_12px_36px_0_rgba(0,0,0,0.22)] py-2'
+            : 'bg-white/15 backdrop-blur-xl border-white/20 hover:bg-white/20 hover:border-white/30 py-2.5'
         } px-5 sm:px-6 flex items-center justify-between`}
       >
         {/* LEFT: Brand / Logo */}
         <div className="flex items-center">
           <div 
-            onClick={() => navigate(ROUTES.HOME)}
+            onClick={() => navigate(isAuthApp ? ROUTES.DASHBOARD : ROUTES.HOME)}
             className="flex items-center gap-2.5 cursor-pointer group transition-transform duration-200 hover:scale-[1.01]"
           >
             <Logo />
           </div>
         </div>
 
-        {/* CENTER: Navigation Links */}
+        {/* CENTER: Navigation Links (Landing only) */}
         {isLanding && (
           <nav className="hidden md:flex items-center gap-1 sm:gap-2 text-[13px] font-medium text-white/90">
             <a
@@ -113,7 +115,7 @@ export default function Navbar({ scrollToSection }: NavbarProps) {
             <span>GitHub</span>
           </a>
 
-          {!isDashboard ? (
+          {!isAuthApp && (
             <>
               <button 
                 onClick={() => navigate(ROUTES.LOGIN)}
@@ -137,13 +139,6 @@ export default function Navbar({ scrollToSection }: NavbarProps) {
                 Sign Up
               </button>
             </>
-          ) : (
-            <button 
-              onClick={() => navigate(ROUTES.HOME)}
-              className="text-xs font-medium text-white/90 hover:text-white border border-white/20 bg-white/10 hover:bg-white/20 rounded-xl px-4 py-1.5 transition-all duration-200 backdrop-blur-md"
-            >
-              Log Out
-            </button>
           )}
         </div>
 
@@ -199,7 +194,7 @@ export default function Navbar({ scrollToSection }: NavbarProps) {
               <span>GitHub</span>
             </a>
 
-            {!isDashboard ? (
+            {!isAuthApp && (
               <>
                 <button
                   onClick={() => {
@@ -229,16 +224,6 @@ export default function Navbar({ scrollToSection }: NavbarProps) {
                   Sign Up
                 </button>
               </>
-            ) : (
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  navigate(ROUTES.HOME);
-                }}
-                className="w-full py-2.5 text-xs font-medium text-white/90 hover:text-white border border-white/20 bg-white/10 rounded-xl transition-colors"
-              >
-                Log Out
-              </button>
             )}
           </div>
         </div>

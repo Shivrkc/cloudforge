@@ -4,8 +4,13 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
-  testEmail,
   verifyEmail,
+  testEmail,
+  googleCallback,
+  githubLoginCallback,
+  forgotPassword,
+  resetPassword,
+  changePassword,
 } from "../controllers/auth.controller";
 
 import { authenticate } from "../middleware/auth.middleware";
@@ -42,6 +47,7 @@ router.get("/github", (req: Request, res: Response) => {
 
   return res.redirect(githubAuthUrl);
 });
+router.get("/github/callback", githubLoginCallback);
 
 // Google OAuth
 router.get("/google", (req: Request, res: Response) => {
@@ -67,11 +73,9 @@ router.get("/google", (req: Request, res: Response) => {
 
   return res.redirect(googleAuthUrl);
 });
-
+router.get("/google/callback", googleCallback);
 /*
-|--------------------------------------------------------------------------
-| Existing Authentication Routes
-|--------------------------------------------------------------------------
+Existing Authentication Routes
 */
 
 router.get("/verify-email", verifyEmail);
@@ -85,6 +89,9 @@ router.post(
 );
 
 router.post("/login", loginUser);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+router.put("/change-password", authenticate, changePassword);
 
 router.get(
   "/me",

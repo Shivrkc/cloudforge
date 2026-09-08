@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma";
+import { deleteDockerImage } from "./docker.service";
 
 export interface CreateProjectInput {
   name: string;
@@ -33,19 +34,91 @@ export const createProject = async (userId: string, data: CreateProjectInput) =>
 };
 
 export const getUserProjects = async (userId: string) => {
-  return await prisma.project.findMany({
+  const projects = await prisma.project.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: { deployments: true },
+      },
+      deployments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          branch: true,
+          commitSha: true,
+          commitMsg: true,
+          imageTag: true,
+          createdAt: true,
+          completedAt: true,
+        },
+      },
+    },
   });
+
+  return projects.map((project) => ({
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    repositoryName: project.repositoryName,
+    repositoryUrl: project.repositoryUrl,
+    branch: project.branch,
+    status: project.status,
+    userId: project.userId,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+    deploymentsCount: project._count.deployments,
+    latestDeployment: project.deployments[0] || null,
+  }));
 };
 
 export const getUserProjectById = async (id: string, userId: string) => {
-  return await prisma.project.findFirst({
+  const project = await prisma.project.findFirst({
     where: {
       id,
       userId,
     },
+    include: {
+      _count: {
+        select: { deployments: true },
+      },
+      deployments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          branch: true,
+          commitSha: true,
+          commitMsg: true,
+          imageTag: true,
+          createdAt: true,
+          completedAt: true,
+        },
+      },
+    },
   });
+
+  if (!project) {
+    return null;
+  }
+
+  return {
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    repositoryName: project.repositoryName,
+    repositoryUrl: project.repositoryUrl,
+    branch: project.branch,
+    status: project.status,
+    userId: project.userId,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+    deploymentsCount: project._count.deployments,
+    latestDeployment: project.deployments[0] || null,
+  };
 };
 
 export const updateUserProject = async (
@@ -77,10 +150,27 @@ export const updateUserProject = async (
 export const deleteUserProject = async (id: string, userId: string) => {
   const project = await prisma.project.findFirst({
     where: { id, userId },
+    include: {
+      deployments: {
+        where: {
+          imageTag: { not: null },
+        },
+        select: { imageTag: true },
+      },
+    },
   });
 
   if (!project) {
     return null;
+  }
+
+  // Prune any generated local Docker images for this project's deployments
+  for (const dep of project.deployments) {
+    if (dep.imageTag) {
+      await deleteDockerImage(dep.imageTag).catch((err) => {
+        console.warn(`[ProjectService] Could not prune image ${dep.imageTag} during project deletion:`, err);
+      });
+    }
   }
 
   return await prisma.project.delete({

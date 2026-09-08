@@ -15,9 +15,17 @@ export const connectGithub = async (req: AuthRequest, res: Response) => {
 
     const authUrl = await githubService.generateConnectUrl(userId);
 
+    // If client requested JSON (e.g. authenticated Axios call from frontend), return the URL as JSON
+    if (req.headers.accept?.includes("application/json") || req.xhr) {
+      return res.status(200).json({
+        success: true,
+        url: authUrl,
+      });
+    }
+
     return res.redirect(authUrl);
-  } catch (error) {
-    console.error("GitHub OAuth initiation failed:", error);
+  } catch (error: any) {
+    console.error("GitHub OAuth initiation failed:", error.message || "Unknown error");
 
     return res.status(500).json({
       success: false,
@@ -57,8 +65,14 @@ export const githubCallback = async (req: Request, res: Response) => {
     return res.redirect(
       `${frontendUrl}/dashboard?github_success=connected`
     );
-  } catch (error) {
-    console.error("GitHub OAuth callback failed:", error);
+  } catch (error: any) {
+    console.error("GitHub OAuth callback failed:", error.message || "Unknown error");
+
+    if (error.message === "ACCOUNT_ALREADY_LINKED" || error.code === "ACCOUNT_ALREADY_LINKED") {
+      return res.redirect(
+        `${frontendUrl}/dashboard?github_error=account_already_linked`
+      );
+    }
 
     return res.redirect(
       `${frontendUrl}/dashboard?github_error=connection_failed`
@@ -113,8 +127,17 @@ export const githubRepositories = async (
       success: true,
       repositories,
     });
-  } catch (error) {
-    console.error("GitHub repositories error:", error);
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "GitHub access token has expired or is invalid. Please reconnect your GitHub account.",
+        requiresReconnect: true,
+      });
+    }
+
+    console.error("GitHub repositories error:", error.message || "Unknown error");
 
     return res.status(500).json({
       success: false,
@@ -161,12 +184,51 @@ export const githubBranches = async (
       success: true,
       branches,
     });
-  } catch (error) {
-    console.error("GitHub branches error:", error);
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "GitHub access token has expired or is invalid. Please reconnect your GitHub account.",
+        requiresReconnect: true,
+      });
+    }
+
+    console.error("GitHub branches error:", error.message || "Unknown error");
 
     return res.status(500).json({
       success: false,
       message: "Failed to fetch GitHub branches.",
+    });
+  }
+};
+
+export const disconnectGithub = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user.",
+      });
+    }
+
+    await githubService.disconnectGithub(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "GitHub account disconnected successfully.",
+    });
+  } catch (error: any) {
+    console.error("Disconnect GitHub error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to disconnect GitHub account.",
     });
   }
 };

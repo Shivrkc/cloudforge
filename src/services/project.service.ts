@@ -1,4 +1,5 @@
 import api from "./api";
+import { DeploymentStatus } from "../types";
 
 export interface BackendProject {
   id: string;
@@ -11,6 +12,17 @@ export interface BackendProject {
   userId: string;
   createdAt: string;
   updatedAt: string;
+  deploymentsCount: number;
+  latestDeployment?: {
+    id: string;
+    status: DeploymentStatus;
+    branch: string;
+    commitSha?: string | null;
+    commitMsg?: string | null;
+    imageTag?: string | null;
+    createdAt: string;
+    completedAt?: string | null;
+  } | null;
 }
 
 export interface CreateProjectPayload {

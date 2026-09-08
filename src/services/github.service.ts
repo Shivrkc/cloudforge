@@ -31,6 +31,11 @@ export const getGithubStatus = async (): Promise<GithubStatus> => {
   return response.data;
 };
 
+export const getGithubConnectUrl = async (): Promise<string> => {
+  const response = await api.get<{ success: boolean; url: string }>("/github/connect");
+  return response.data.url;
+};
+
 export const getGithubRepositories = async (): Promise<GithubRepository[]> => {
   const response = await api.get("/github/repos");
   return response.data.repositories;
@@ -45,4 +50,9 @@ export const getGithubBranches = async (
   );
 
   return response.data.branches;
+};
+
+export const disconnectGithub = async (): Promise<{ success: boolean; message: string }> => {
+  const response = await api.delete("/github/disconnect");
+  return response.data;
 };

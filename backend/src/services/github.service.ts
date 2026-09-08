@@ -34,6 +34,7 @@ export const generateConnectUrl = async (userId: string): Promise<string> => {
     client_id: clientId,
     scope: "repo",
     state: rawState,
+    prompt: "select_account",
   });
 
   return `https://github.com/login/oauth/authorize?${params.toString()}`;
@@ -116,7 +117,19 @@ export const handleCallback = async (code: string, state: string): Promise<void>
   const githubUserId = String(githubUserIdNum);
   const encryptedAccessToken = encryptToken(access_token);
 
-  // Upsert GithubAccount tied to HAVN user
+  // Check whether this GitHub account is already connected to another HAVN user
+  const existingGithubAccount = await prisma.githubAccount.findUnique({
+    where: { githubUserId },
+  });
+
+  if (existingGithubAccount && existingGithubAccount.userId !== userId) {
+    const error = new Error("ACCOUNT_ALREADY_LINKED");
+    (error as any).code = "ACCOUNT_ALREADY_LINKED";
+    throw error;
+  }
+
+  // Safe to connect/refresh for current user:
+  // If the same user already has this GitHub account (or another), upsert updates it.
   await prisma.githubAccount.upsert({
     where: { userId },
     update: {
@@ -239,4 +252,18 @@ export const getGithubBranches = async (
     name: branch.name,
     protected: branch.protected,
   }));
+};
+
+export const disconnectGithub = async (userId: string) => {
+  // Delete user's connected GitHub account
+  await prisma.githubAccount.deleteMany({
+    where: { userId },
+  });
+
+  // Also clean up any lingering OAuth states
+  await prisma.githubOauthState.deleteMany({
+    where: { userId },
+  });
+
+  return { success: true };
 };

@@ -13,9 +13,12 @@ import Faq from "./components/landing/Faq";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-
+import OAuthCallback from "./pages/OAuthCallback";
 export default function App() {
   const location = useLocation();
 
@@ -82,13 +85,46 @@ export default function App() {
   }
 />
 
+<Route
+  path="/reset-password"
+  element={
+    <div className="flex flex-col flex-grow">
+      <ResetPassword />
+    </div>
+  }
+/>
+<Route
+  path="/forgot-password"
+  element={
+    <div className="flex flex-col flex-grow">
+      <ForgotPassword />
+    </div>
+  }
+/>
+<Route
+  path="/oauth/callback"
+  element={
+    <div className="flex flex-col flex-grow">
+      <OAuthCallback />
+    </div>
+  }
+/>
+
         <Route
           path={ROUTES.DASHBOARD}
           element={
-           <ProtectedRoute>
-            <Dashboard />
+            <ProtectedRoute>
+              <Dashboard />
             </ProtectedRoute>
-           }
+          }
+        />
+        <Route
+          path={ROUTES.PROFILE}
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
         />
       </Routes>
     </div>

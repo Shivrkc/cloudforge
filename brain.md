@@ -22,6 +22,32 @@
 
 HAVN is intended to be a portfolio-grade, production-style project rather than a simple CRUD college project.
 
+## Current Development Status
+
+As of the latest verified milestone:
+
+```text
+Authentication (email/password + email verification)   DONE
+Project CRUD + PostgreSQL persistence                  DONE
+GitHub repository OAuth integration                   DONE
+Real repository fetching                              DONE
+Real branch fetching                                  DONE
+Dashboard project integration                         DONE
+Professor-demo polish                                 CURRENT
+GitHub Login                                           PENDING
+Google Login                                           PENDING
+Developer profile                                     PENDING
+Project delete UI                                     PENDING
+Mock Dashboard cleanup                                PENDING
+Docker build engine                                   PLANNED
+Deployment engine                                     PLANNED
+Deployment logs                                       PLANNED
+AI deployment-log assistant                           PLANNED
+```
+
+The current Dashboard deployment/build animation is a simulation. It is not a real Docker deployment.
+
+
 ---
 
 ## 2. September 15 MVP Scope
@@ -552,13 +578,25 @@ OAuth is optional for the current core-auth milestone and must not break email/p
 
 ---
 
-## 12. Dashboard Status
+## 12\. Dashboard Status
 
-Dashboard UI exists.
+Dashboard UI exists and the project/repository portion is now connected to real backend data.
 
-Current dashboard is still largely **mock/data-driven**.
+### Implemented
 
-`src/pages/Dashboard.tsx` currently uses:
+- Dashboard protected by existing authentication
+- Real project list from `GET /api/projects`
+- Real project creation through `POST /api/projects`
+- Real GitHub connection status
+- Real GitHub repository listing
+- Real GitHub branch listing
+- Real repository + branch selection
+- Selected repository linked to a PostgreSQL Project
+- Project data persists after Dashboard refresh
+
+### Remaining mock/demo behavior
+
+`src/data/mockData.ts` still contains mock:
 
 ```text
 MOCK_PROJECTS
@@ -567,33 +605,22 @@ MOCK_REPOSITORIES
 SIMULATED_BUILD_STEPS
 ```
 
-from:
+The GitHub repository flow no longer uses `MOCK_REPOSITORIES`.
 
-```text
-src/data/mockData.ts
-```
+The Dashboard still contains mock/demo concepts for deployment history, deployment metrics, build progress, databases, environment variables, and AI assistant.
 
-The UI already contains concepts for:
+### Immediate Dashboard polish tasks
 
-- Projects
-- Deployments
-- Repository connection
-- Build progress
-- Deployment logs
-- Databases
-- Environment variables
-- GitHub
-- AI assistant
-
-These are currently UI/product concepts, not all real backend functionality.
-
-### Important
-
-Do not assume the mock dashboard means those backend modules are implemented.
-
-The next goal is to replace the relevant mock repository/project behavior with real data incrementally.
-
----
+- Remove leftover mock projects/repositories such as `dev-master`
+- Remove fake deployment metrics and activity
+- Remove fake Live URLs
+- Replace mock/demo copy with real user/project data
+- Add Delete Project UI using `DELETE /api/projects/:id`
+- Add project update/rename UI where appropriate
+- Add proper empty states
+- Add loading/error states
+- Add real developer profile information
+- Keep planned/unimplemented features clearly separated from real functionality
 
 ## 13. Git Integration: Immediate Next Module
 
@@ -622,30 +649,11 @@ Do not add GitLab or Bitbucket for the September 15 MVP.
 
 ---
 
-## 14. Project Management Direction
+## 14\. Project Management Direction
 
-The dashboard currently has mock projects.
+A real `Project` Prisma model and CRUD API now exist.
 
-The next backend data model should represent real HAVN projects.
-
-Conceptually:
-
-```text
-User
- └── Projects
-      ├── id
-      ├── name
-      ├── description
-      ├── repository information
-      ├── branch
-      ├── status
-      ├── createdAt
-      └── updatedAt
-```
-
-The exact Prisma schema should be designed from the existing schema, not invented independently by an AI agent.
-
-Likely API direction:
+Implemented routes:
 
 ```text
 POST   /api/projects
@@ -655,9 +663,18 @@ PATCH  /api/projects/:id
 DELETE /api/projects/:id
 ```
 
-Every project query must be scoped to the authenticated user.
+Every project query is scoped to the authenticated `userId`.
 
----
+The Dashboard can create and fetch real projects, and project data persists in PostgreSQL.
+
+### Remaining project-management work
+
+- Add Delete Project UI
+- Add confirmation before deletion
+- Add Rename/Edit Project UI where useful
+- Add project empty state
+- Remove remaining mock project data
+- Keep deployment fields honest until a real Deployment model exists
 
 ## 15. Planned DevOps Pipeline
 
@@ -1027,57 +1044,72 @@ Brand cleanup should be handled deliberately during polishing.
 
 ---
 
-## 24. Current Known Gaps
+## 24\. Current Known Gaps
 
 ### Backend
 
-- No real Project model yet
-- No real Project CRUD API
-- No real GitHub repository API integration
-- GitHub OAuth callback is not complete
-- Google OAuth callback is in progress
+- GitHub Login OAuth callback is not complete
+- Google Login OAuth callback is not complete
+- GitHub repository disconnect endpoint is not implemented
 - No Docker build engine
 - No deployment engine
+- No Deployment database model yet
 - No real deployment log persistence
 - No AI deployment-log assistant
 - Security hardening is not complete
 
 ### Frontend
 
-- Dashboard still relies heavily on mock data
-- Repository connection UI is currently simulated
-- Build simulation is not a real Docker build
+- Dashboard still contains mock/demo sections that need cleanup
+- Delete Project UI is not yet implemented
+- Developer profile UI is not yet implemented
+- GitHub Login and Google Login are not complete
+- Build progress is still simulated
 - Deployment UI is not connected to a real deployment engine
+- Deployment metrics/history are still mock data
+- Database and environment-variable sections are not backed by real APIs
 - AI assistant UI/concept exists but real deployment-log analysis is not yet implemented
 
----
-
-## 25. Immediate Task
+## 25\. Immediate Task
 
 ### Current priority
 
-**Dashboard + GitHub Integration**
+**Professor Demo Polish**
+
+Dashboard + Project Management + GitHub Repository Integration are implemented and tested. Do not start Docker until this polish pass is complete.
 
 Do this in order:
 
 ```text
-1. Design Project + GitHub relationship
-2. Update Prisma schema
-3. Run migration
-4. Implement Project APIs
-5. Implement GitHub OAuth callback
-6. Fetch GitHub repositories
-7. Fetch/select branches
-8. Connect repository to HAVN project
-9. Replace mock repository/project behavior
-10. Test ownership/security
-11. Build frontend + backend
-12. Polish UI/error/loading states
+1. Remove leftover mock Dashboard data
+2. Remove fake deployment metrics/activity/URLs
+3. Add Delete Project UI using DELETE /api/projects/:id
+4. Add project rename/edit UI where useful
+5. Add real developer profile display
+6. Polish email/password authentication
+7. Implement GitHub Login separately from repository integration
+8. Implement Google Login
+9. Add GitHub disconnect flow
+10. Polish loading/error/empty states
+11. Verify authentication and project ownership
+12. Build and perform a clean end-to-end professor-demo test
 ```
 
-Do not start Docker yet.
+### After the professor-demo polish
 
----
+Start the real DevOps pipeline:
+
+```text
+Docker Build
+↓
+Deployment
+↓
+Deployment Logs
+↓
+AI Assistant Logs
+```
+
+Do not implement fake deployment success states as substitutes for the real deployment engine.
 
 ## 26. September 15 Delivery Definition
 
@@ -1189,9 +1221,11 @@ Authentication
     ↓
 Dashboard
     ↓
-GitHub Integration       ← CURRENT TARGET
+GitHub Repository Integration       ← DONE
     ↓
-POLISH
+Professor Demo Polish               ← CURRENT
+    ↓
+GitHub Login + Google Login
     ↓
 Docker Build
     ↓
@@ -1199,7 +1233,55 @@ Deployment
     ↓
 Deployment Logs
     ↓
-AI Assistant Logs        ← USP
+AI Assistant Logs                   ← USP
 ```
 
-**Current rule: finish Git Integration before moving to Docker.**
+### Current rule
+
+GitHub Repository Integration is done.
+
+Before Docker, finish the professor-demo polish:
+
+- clean remaining mock Dashboard data
+- add project deletion
+- add developer profile
+- polish authentication
+- implement GitHub Login
+- implement Google Login
+- finish GitHub disconnect
+- verify loading/error/empty states
+- build and test the complete flow
+
+The next major engineering milestone after polish is the real Docker → Deployment pipeline.
+
+### Current verified vertical slice
+
+```text
+User
+  ↓
+Email/password authentication + email verification
+  ↓
+Protected Dashboard
+  ↓
+Connect GitHub
+  ↓
+GitHub OAuth repository integration
+  ↓
+Fetch real repositories
+  ↓
+Select repository
+  ↓
+Fetch real branches
+  ↓
+Select branch
+  ↓
+Create HAVN Project
+  ↓
+Persist Project in PostgreSQL
+  ↓
+Refresh Dashboard
+  ↓
+Project remains available
+```
+
+The deployment shown in the current Dashboard is still a simulated build/deployment experience. It must not be described as a real deployment until Docker and the deployment engine are implemented.
