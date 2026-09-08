@@ -88,6 +88,12 @@ export default function Dashboard() {
     email: string;
     avatar?: string | null;
     provider?: string;
+    githubConnected?: boolean;
+    githubAccount?: {
+      username: string;
+      githubUserId: string;
+      scope: string;
+    } | null;
   } | null>(null);
   const [avatarError, setAvatarError] = useState<boolean>(false);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
@@ -179,7 +185,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     getCurrentUser().then((data) => {
-      if (data?.success && data?.user) setCurrentUser(data.user);
+      if (data?.success && data?.user) {
+        setCurrentUser(data.user);
+        if (data.user.githubConnected && data.user.githubAccount) {
+          setGithubConnected(true);
+          setGithubUsername(data.user.githubAccount.username);
+        }
+      }
     }).catch(console.error);
   }, []);
 

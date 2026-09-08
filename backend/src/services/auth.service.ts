@@ -81,6 +81,15 @@ export const login = async (data: LoginData) => {
     where: {
       email,
     },
+    include: {
+      githubAccount: {
+        select: {
+          githubUsername: true,
+          githubUserId: true,
+          scope: true,
+        },
+      },
+    },
   });
 
   if (!user) {
@@ -115,6 +124,14 @@ export const login = async (data: LoginData) => {
       email: user.email,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
+      githubConnected: !!user.githubAccount,
+      githubAccount: user.githubAccount
+        ? {
+            username: user.githubAccount.githubUsername,
+            githubUserId: user.githubAccount.githubUserId,
+            scope: user.githubAccount.scope,
+          }
+        : null,
     },
   };
 };
@@ -432,6 +449,15 @@ export const getCurrentUser = async (userId: string) => {
     where: {
       id: userId,
     },
+    include: {
+      githubAccount: {
+        select: {
+          githubUsername: true,
+          githubUserId: true,
+          scope: true,
+        },
+      },
+    },
   });
 
   if (!user) {
@@ -448,6 +474,14 @@ export const getCurrentUser = async (userId: string) => {
       provider: user.provider,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
+      githubConnected: !!user.githubAccount,
+      githubAccount: user.githubAccount
+        ? {
+            username: user.githubAccount.githubUsername,
+            githubUserId: user.githubAccount.githubUserId,
+            scope: user.githubAccount.scope,
+          }
+        : null,
     },
   };
 };
